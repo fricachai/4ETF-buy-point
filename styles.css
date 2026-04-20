@@ -320,12 +320,6 @@ h3 {
   z-index: 1;
 }
 
-.chart-help {
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
 .watchlist-panel {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.03));
   border-left: 1px solid var(--line);
