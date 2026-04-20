@@ -288,18 +288,10 @@ function getRecentSeriesMin(series, endIndex, lookback, fallback = null) {
 
 function calculateDrawdownWindow(candles, endIndex, lookback = BUY_REMINDER_LOOKBACK) {
   if (!candles.length || endIndex < 0 || endIndex >= candles.length) return null;
-  const startIndex = endIndex - lookback + 1;
+  const startIndex = endIndex - lookback;
   if (startIndex < 0) return null;
-  let baseClose = null;
-  let baseIndex = -1;
-  for (let i = startIndex; i <= endIndex; i += 1) {
-    const close = candles[i]?.close;
-    if (!Number.isFinite(close)) continue;
-    if (baseClose == null || close > baseClose) {
-      baseClose = close;
-      baseIndex = i;
-    }
-  }
+  const baseClose = candles[startIndex]?.close;
+  const baseIndex = startIndex;
   const currentClose = candles[endIndex]?.close;
   if (!Number.isFinite(baseClose) || baseClose <= 0 || !Number.isFinite(currentClose)) return null;
 
@@ -318,12 +310,11 @@ function calculateDrawdownWindow(candles, endIndex, lookback = BUY_REMINDER_LOOK
 function detectDrawdownBuySignals(candles) {
   const signals = [];
   let latestSignal = null;
-  let wasInRange = false;
 
   for (let i = 0; i < candles.length; i += 1) {
     const drawdown = calculateDrawdownWindow(candles, i);
     if (!drawdown) continue;
-    if (drawdown.inRange && !wasInRange) {
+    if (drawdown.inRange) {
       signals.push({
         index: i,
         type: "drop-buy",
@@ -331,7 +322,6 @@ function detectDrawdownBuySignals(candles) {
         dropPct: drawdown.dropPct,
       });
     }
-    wasInRange = drawdown.inRange;
     if (i === candles.length - 1) latestSignal = drawdown;
   }
 
