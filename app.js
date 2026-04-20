@@ -20,7 +20,7 @@ const BUY_REMINDER_LOOKBACK = 10;
 const BUY_REMINDER_RULES = {
   "0050": { min: 5, max: 7, addOn: 7 },
   "0056": { min: 6, max: 8, addOn: 8 },
-  "00878": { min: 5, max: 5, addOn: 5 },
+  "00878": { min: 4.5, max: 5.5, addOn: 5.5 },
   "006208": { min: 5, max: 7, addOn: 7 },
 };
 
@@ -294,9 +294,15 @@ function getBuyReminderRule(code) {
   return BUY_REMINDER_RULES[code] || { min: 4, max: 6 };
 }
 
+function formatRulePercent(value) {
+  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+}
+
 function formatBuyReminderRule(code) {
   const rule = getBuyReminderRule(code);
-  return rule.min === rule.max ? `-${rule.min}%` : `-${rule.min}% ~ -${rule.max}%`;
+  return rule.min === rule.max
+    ? `-${formatRulePercent(rule.min)}%`
+    : `-${formatRulePercent(rule.min)}% ~ -${formatRulePercent(rule.max)}%`;
 }
 
 function formatBuyReminderDescription(code) {

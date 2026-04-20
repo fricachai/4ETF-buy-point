@@ -30,9 +30,9 @@ TRACKED_ETFS = {
     "00878": {
         "name": "Cathay Sustainable High Dividend",
         "path": Path("data/00878.json"),
-        "min_drop": 5.0,
-        "max_drop": 5.0,
-        "add_on_drop": 5.0,
+        "min_drop": 4.5,
+        "max_drop": 5.5,
+        "add_on_drop": 5.5,
     },
     "006208": {
         "name": "Fubon Taiwan 50",
@@ -58,11 +58,14 @@ def load_candles(path: Path) -> list[dict]:
 
 
 def format_rule_text(min_drop: float, max_drop: float, add_on_drop: float) -> str:
+    def fmt(value: float) -> str:
+        return f"{int(value)}" if float(value).is_integer() else f"{value:.1f}"
+
     if min_drop == max_drop:
-        return f"10-day close drop -{min_drop:.0f}% (add on at -{add_on_drop:.0f}%)"
+        return f"10-day close drop -{fmt(min_drop)}% (add on at -{fmt(add_on_drop)}%)"
     return (
-        f"10-day close drop -{min_drop:.0f}% ~ -{max_drop:.0f}% "
-        f"(add on at -{add_on_drop:.0f}%)"
+        f"10-day close drop -{fmt(min_drop)}% ~ -{fmt(max_drop)}% "
+        f"(add on at -{fmt(add_on_drop)}%)"
     )
 
 
