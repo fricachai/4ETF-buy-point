@@ -290,7 +290,16 @@ function calculateDrawdownWindow(candles, endIndex, lookback = BUY_REMINDER_LOOK
   if (!candles.length || endIndex < 0 || endIndex >= candles.length) return null;
   const startIndex = endIndex - lookback + 1;
   if (startIndex < 0) return null;
-  const baseClose = candles[startIndex]?.close;
+  let baseClose = null;
+  let baseIndex = -1;
+  for (let i = startIndex; i <= endIndex; i += 1) {
+    const close = candles[i]?.close;
+    if (!Number.isFinite(close)) continue;
+    if (baseClose == null || close > baseClose) {
+      baseClose = close;
+      baseIndex = i;
+    }
+  }
   const currentClose = candles[endIndex]?.close;
   if (!Number.isFinite(baseClose) || baseClose <= 0 || !Number.isFinite(currentClose)) return null;
 
@@ -298,7 +307,7 @@ function calculateDrawdownWindow(candles, endIndex, lookback = BUY_REMINDER_LOOK
   return {
     startIndex,
     endIndex,
-    baseIndex: startIndex,
+    baseIndex,
     baseClose,
     currentClose,
     dropPct,
