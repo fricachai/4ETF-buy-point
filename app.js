@@ -282,6 +282,22 @@ function computeKd(candles) {
   return { k, d };
 }
 
+function computeCci(candles, length = 20) {
+  const typicalPrices = candles.map((c) => (c.high + c.low + c.close) / 3);
+  const cci = Array(candles.length).fill(null);
+  for (let i = length - 1; i < candles.length; i += 1) {
+    const window = typicalPrices.slice(i - length + 1, i + 1);
+    const smaTp = window.reduce((sum, value) => sum + value, 0) / length;
+    const meanDeviation = window.reduce((sum, value) => sum + Math.abs(value - smaTp), 0) / length;
+    if (meanDeviation === 0) {
+      cci[i] = 0;
+      continue;
+    }
+    cci[i] = (typicalPrices[i] - smaTp) / (0.015 * meanDeviation);
+  }
+  return cci;
+}
+
 function getRecentSeriesMin(series, endIndex, lookback, fallback = null) {
   const values = series
     .slice(Math.max(0, endIndex - lookback + 1), endIndex + 1)
@@ -641,6 +657,7 @@ function renderChart(stock) {
   const sma60 = sma(closes, 60);
   const macd = computeMacd(candles);
   const kd = computeKd(candles);
+  const cci = computeCci(candles);
   const buySignalData = detectDrawdownBuySignals(candles, stock.code);
   const buySignals = buySignalData.signals;
   const lastCandle = candles[candles.length - 1];
@@ -651,10 +668,11 @@ function renderChart(stock) {
   const priceArea = { x: 42, y: 72, w: 1120, h: 340 };
   const xAxisArea = { x: 42, y: 428, w: 1120, h: 38 };
   const priceScaleArea = { x: 1162, y: 72, w: 78, h: 350 };
-  const kdjArea = { x: 42, y: 498, w: 1198, h: 96 };
-  const macdArea = { x: 42, y: 634, w: 1198, h: 106 };
-  const volumeArea = { x: 42, y: 780, w: 1198, h: 102 };
-  state.chartLayout = { priceArea, xAxisArea, priceScaleArea, volumeArea, macdArea, kdjArea };
+  const kdjArea = { x: 42, y: 498, w: 1198, h: 88 };
+  const macdArea = { x: 42, y: 622, w: 1198, h: 92 };
+  const cciArea = { x: 42, y: 750, w: 1198, h: 92 };
+  const volumeArea = { x: 42, y: 878, w: 1198, h: 92 };
+  state.chartLayout = { priceArea, xAxisArea, priceScaleArea, volumeArea, cciArea, macdArea, kdjArea };
 
   drawRoundRect(
     xAxisArea.x,
@@ -683,6 +701,7 @@ function renderChart(stock) {
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
+  drawRoundRect(cciArea.x, cciArea.y - 6, cciArea.w, cciArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
   drawRoundRect(macdArea.x, macdArea.y - 6, macdArea.w, macdArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
   drawRoundRect(kdjArea.x, kdjArea.y - 6, kdjArea.w, kdjArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
 
@@ -701,6 +720,7 @@ function renderChart(stock) {
   const visibleMacdHist = macd.hist.slice(startIndex, endIndex);
   const visibleMacdDif = macd.dif.slice(startIndex, endIndex);
   const visibleMacdDea = macd.dea.slice(startIndex, endIndex);
+  const visibleCci = cci.slice(startIndex, endIndex);
   const visibleK = kd.k.slice(startIndex, endIndex);
   const visibleD = kd.d.slice(startIndex, endIndex);
   const visibleSignals = buySignals
@@ -713,6 +733,7 @@ function renderChart(stock) {
     xAxisArea,
     priceScaleArea,
     volumeArea,
+    cciArea,
     macdArea,
     kdjArea,
     interaction: {
@@ -730,6 +751,7 @@ function renderChart(stock) {
   const hoveredMacdHist = hoverIndex != null ? visibleMacdHist[hoverIndex] : null;
   const hoveredMacdDif = hoverIndex != null ? visibleMacdDif[hoverIndex] : null;
   const hoveredMacdDea = hoverIndex != null ? visibleMacdDea[hoverIndex] : null;
+  const hoveredCci = hoverIndex != null ? visibleCci[hoverIndex] : null;
   const hoveredK = hoverIndex != null ? visibleK[hoverIndex] : null;
   const hoveredD = hoverIndex != null ? visibleD[hoverIndex] : null;
 
@@ -907,6 +929,27 @@ function renderChart(stock) {
   drawLineSeries(macdArea, candleWidth, panX, visibleMacdDea, mapMacdY, "#ff9f1a", 2);
   ctx.restore();
 
+  const cciRange = getSeriesRange([visibleCci], -200, 200);
+  const cciMin = Math.min(-200, cciRange.min);
+  const cciMax = Math.max(200, cciRange.max);
+  const mapCciY = (value) => cciArea.y + ((cciMax - value) / (cciMax - cciMin || 1)) * cciArea.h;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cciArea.x, cciArea.y, cciArea.w, cciArea.h);
+  ctx.clip();
+  [100, 0, -100].forEach((level) => {
+    const y = mapCciY(level);
+    ctx.strokeStyle = level === 0 ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.10)";
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(cciArea.x, y);
+    ctx.lineTo(cciArea.x + cciArea.w, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+  drawLineSeries(cciArea, candleWidth, panX, visibleCci, mapCciY, "#9d7bff", 2);
+  ctx.restore();
+
   const kdRange = getSeriesRange([visibleK, visibleD], 0, 100);
   const kdMin = Math.min(0, kdRange.min);
   const kdMax = Math.max(100, kdRange.max);
@@ -934,10 +977,14 @@ function renderChart(stock) {
   const macdTitle = hoveredCandle
     ? `MACD DIF ${formatNumber(hoveredMacdDif, 2)} DEA ${formatNumber(hoveredMacdDea, 2)} HIST ${formatNumber(hoveredMacdHist, 2)}`
     : "MACD";
+  const cciTitle = hoveredCandle
+    ? `CCI ${formatNumber(hoveredCci, 2)}`
+    : "CCI";
   const kdTitle = hoveredCandle
     ? `KD K ${formatNumber(hoveredK, 2)} D ${formatNumber(hoveredD, 2)}`
     : "KD";
   drawText(volumeTitle, volumeArea.x, volumeArea.y - 12, "#97a0af", 14);
+  drawText(cciTitle, cciArea.x, cciArea.y - 12, "#97a0af", 14);
   drawText(macdTitle, macdArea.x, macdArea.y - 12, "#97a0af", 14);
   drawText(kdTitle, kdjArea.x, kdjArea.y - 12, "#97a0af", 14);
 
@@ -946,6 +993,7 @@ function renderChart(stock) {
     const crosshairBottom = Math.max(
       kdjArea.y + kdjArea.h,
       macdArea.y + macdArea.h,
+      cciArea.y + cciArea.h,
       volumeArea.y + volumeArea.h,
     );
     ctx.save();
@@ -964,6 +1012,8 @@ function renderChart(stock) {
     ? priceArea
     : state.chartView.hoverZone === "volumeArea"
       ? volumeArea
+      : state.chartView.hoverZone === "cciArea"
+        ? cciArea
       : state.chartView.hoverZone === "macdArea"
         ? macdArea
         : state.chartView.hoverZone === "kdjArea"
@@ -987,6 +1037,9 @@ function renderChart(stock) {
     } else if (activeHorizontalArea === volumeArea) {
       const value = volumeMax - ((lineY - volumeArea.y) / volumeArea.h) * volumeMax;
       axisValueText = formatCompactNumber(Math.max(0, value));
+    } else if (activeHorizontalArea === cciArea) {
+      const value = cciMax - ((lineY - cciArea.y) / cciArea.h) * (cciMax - cciMin || 1);
+      axisValueText = formatNumber(value, 2);
     } else if (activeHorizontalArea === macdArea) {
       const value = macdMax - ((lineY - macdArea.y) / macdArea.h) * (macdMax - macdMin || 1);
       axisValueText = formatNumber(value, 2);
@@ -1364,6 +1417,7 @@ function detectChartZone(point) {
   const inBox = (box) => point.x >= box.x && point.x <= box.x + box.w && point.y >= box.y && point.y <= box.y + box.h;
   if (inBox(layout.priceArea)) return "priceArea";
   if (inBox(layout.volumeArea)) return "volumeArea";
+  if (inBox(layout.cciArea)) return "cciArea";
   if (inBox(layout.macdArea)) return "macdArea";
   if (inBox(layout.kdjArea)) return "kdjArea";
   if (inBox(layout.xAxisArea)) return "xAxis";
@@ -1389,13 +1443,14 @@ function updateHoverCrosshair(point) {
   const areaByZone = {
     priceArea: layout.priceArea,
     volumeArea: layout.volumeArea,
+    cciArea: layout.cciArea,
     macdArea: layout.macdArea,
     kdjArea: layout.kdjArea,
   };
   const activeArea = areaByZone[state.chartView.hoverZone];
   const left = layout.priceArea.x;
   const right = layout.priceArea.x + layout.priceArea.w;
-  const snapZones = new Set(["priceArea", "volumeArea", "macdArea", "kdjArea", "xAxis"]);
+  const snapZones = new Set(["priceArea", "volumeArea", "cciArea", "macdArea", "kdjArea", "xAxis"]);
   if (!snapZones.has(state.chartView.hoverZone) || point.x < left || point.x > right) {
     state.chartView.hoverX = null;
     state.chartView.hoverY = null;
@@ -1456,11 +1511,11 @@ canvas.addEventListener("pointermove", (event) => {
   updateHoverCrosshair(point);
   canvas.style.cursor = zone === "xAxis"
     ? "ew-resize"
-    : zone === "priceScale"
-      ? "ns-resize"
-      : ["priceArea", "volumeArea", "macdArea", "kdjArea"].includes(zone)
-        ? "crosshair"
-        : "default";
+      : zone === "priceScale"
+        ? "ns-resize"
+        : ["priceArea", "volumeArea", "cciArea", "macdArea", "kdjArea"].includes(zone)
+          ? "crosshair"
+          : "default";
   renderAll();
 });
 
@@ -1505,7 +1560,7 @@ const clearDragState = (event) => {
     canvas.releasePointerCapture(event.pointerId);
   }
   state.dragState = null;
-  canvas.style.cursor = ["priceArea", "volumeArea", "macdArea", "kdjArea"].includes(state.chartView.hoverZone) ? "crosshair" : "default";
+  canvas.style.cursor = ["priceArea", "volumeArea", "cciArea", "macdArea", "kdjArea"].includes(state.chartView.hoverZone) ? "crosshair" : "default";
 };
 
 canvas.addEventListener("pointerup", clearDragState);
