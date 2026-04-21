@@ -22,7 +22,7 @@ python -m http.server 8000
 
 部署完成後，網址通常會是：
 
-`https://fricachai.github.io/0050-to-60MA/`
+`https://fricachai.github.io/4ETF-buy-point/`
 
 ## 買點提醒信
 
