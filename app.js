@@ -669,11 +669,11 @@ function renderChart(stock) {
   const priceArea = { x: 42, y: 72, w: 1120, h: 340 };
   const xAxisArea = { x: 42, y: 428, w: 1120, h: 38 };
   const priceScaleArea = { x: 1162, y: 72, w: 78, h: 350 };
-  const kdjArea = { x: 42, y: 498, w: 1198, h: 88 };
-  const macdArea = { x: 42, y: 622, w: 1198, h: 92 };
-  const cciArea = { x: 42, y: 750, w: 1198, h: 92 };
+  const cciArea = { x: 42, y: 498, w: 1198, h: 88 };
+  const kdjArea = { x: 42, y: 622, w: 1198, h: 92 };
+  const macdArea = { x: 42, y: 750, w: 1198, h: 92 };
   const volumeArea = { x: 42, y: 878, w: 1198, h: 92 };
-  state.chartLayout = { priceArea, xAxisArea, priceScaleArea, volumeArea, cciArea, macdArea, kdjArea };
+  state.chartLayout = { priceArea, xAxisArea, priceScaleArea, volumeArea, macdArea, kdjArea, cciArea };
 
   drawRoundRect(
     xAxisArea.x,
@@ -702,9 +702,9 @@ function renderChart(stock) {
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
-  drawRoundRect(cciArea.x, cciArea.y - 6, cciArea.w, cciArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
   drawRoundRect(macdArea.x, macdArea.y - 6, macdArea.w, macdArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
   drawRoundRect(kdjArea.x, kdjArea.y - 6, kdjArea.w, kdjArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
+  drawRoundRect(cciArea.x, cciArea.y - 6, cciArea.w, cciArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
 
   const visibleCount = clamp(state.chartView.visibleCount, 20, Math.min(220, candles.length));
   state.chartView.visibleCount = visibleCount;
@@ -735,9 +735,9 @@ function renderChart(stock) {
     xAxisArea,
     priceScaleArea,
     volumeArea,
-    cciArea,
     macdArea,
     kdjArea,
+    cciArea,
     interaction: {
       startIndex,
       endIndex,
