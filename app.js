@@ -495,17 +495,31 @@ function formatXAxisLabel(dateStr, anchorDateStr = "") {
   return formatDate(dateStr);
 }
 
-function drawAxisValueTag(area, y, valueText) {
+function drawAxisValueTag(area, y, valueText, side = "left") {
   const paddingX = 8;
   const height = 20;
   const radius = 8;
   ctx.save();
   ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
   const width = ctx.measureText(valueText).width + paddingX * 2;
-  const boxX = area.x + 6;
+  const boxX = side === "right" ? area.x + area.w - width - 6 : area.x + 6;
   const boxY = clamp(y - height / 2, area.y, area.y + area.h - height);
   drawRoundRect(boxX, boxY, width, height, radius, "rgba(18, 21, 27, 0.94)", "rgba(255,255,255,0.24)");
   drawText(valueText, boxX + width / 2, boxY + 14, "#f5f6fa", 12, "center");
+  ctx.restore();
+}
+
+function drawXAxisHoverTag(area, x, valueText) {
+  const paddingX = 10;
+  const height = 22;
+  const radius = 8;
+  ctx.save();
+  ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
+  const width = ctx.measureText(valueText).width + paddingX * 2;
+  const boxX = clamp(x - width / 2, area.x + 4, area.x + area.w - width - 4);
+  const boxY = area.y + area.h - height - 4;
+  drawRoundRect(boxX, boxY, width, height, radius, "rgba(71, 85, 130, 0.96)", "rgba(255,255,255,0.26)");
+  drawText(valueText, boxX + width / 2, boxY + 15, "#f5f6fa", 12, "center");
   ctx.restore();
 }
 
@@ -938,10 +952,12 @@ function renderChart(stock) {
     ctx.save();
     ctx.strokeStyle = "rgba(255,255,255,0.82)";
     ctx.lineWidth = 1;
+    ctx.setLineDash([6, 6]);
     ctx.beginPath();
     ctx.moveTo(lineX, priceArea.y);
     ctx.lineTo(lineX, crosshairBottom);
     ctx.stroke();
+    ctx.setLineDash([]);
     ctx.restore();
   }
 
@@ -979,7 +995,10 @@ function renderChart(stock) {
       const value = kdMax - ((lineY - kdjArea.y) / kdjArea.h) * (kdMax - kdMin || 1);
       axisValueText = formatNumber(value, 2);
     }
-    if (axisValueText) drawAxisValueTag(activeHorizontalArea, lineY, axisValueText);
+    if (axisValueText) {
+      const axisArea = activeHorizontalArea === priceArea ? priceScaleArea : activeHorizontalArea;
+      drawAxisValueTag(axisArea, lineY, axisValueText, "right");
+    }
   }
 
   const tickStep = Math.max(1, Math.ceil(visible.length / 8));
@@ -993,7 +1012,13 @@ function renderChart(stock) {
   }
   const lastLabel = formatXAxisLabel(visible[visible.length - 1].date, anchorDate);
   drawText(lastLabel, xAxisArea.x + xAxisArea.w - 4, xAxisArea.y + 24, "#97a0af", 12, "right");
-  if (hoveredCandle) drawAxisValueTag(xAxisArea, xAxisArea.y + xAxisArea.h / 2, formatDate(hoveredCandle.date));
+  if (hoveredCandle && state.chartView.hoverX != null) {
+    drawXAxisHoverTag(
+      xAxisArea,
+      clamp(state.chartView.hoverX, xAxisArea.x + 4, xAxisArea.x + xAxisArea.w - 4),
+      formatDate(hoveredCandle.date),
+    );
+  }
   drawText("時間軸: 日資料吸附顯示", xAxisArea.x + 10, xAxisArea.y + 12, state.chartView.hoverZone === "xAxis" ? "#ffe27a" : "rgba(151,160,175,0.85)", 11);
   drawText("價格軸: 滾輪縮放", priceScaleArea.x + priceScaleArea.w - 6, priceScaleArea.y + priceScaleArea.h + 16, state.chartView.hoverZone === "priceScale" ? "#7ab5ff" : "rgba(151,160,175,0.85)", 11, "right");
   return { effectiveTimeframe, fallback, lastClose: lastCandle.close };
