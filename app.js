@@ -861,7 +861,6 @@ function renderChart(stock) {
   drawText("SMA5", priceArea.x + 10, priceArea.y + 18, "#36b4ff", 12);
   drawText("SMA20", priceArea.x + 74, priceArea.y + 18, "#f7c843", 12);
   drawText("SMA60", priceArea.x + 150, priceArea.y + 18, "#ff5e67", 12);
-  drawText(formatBuyReminderDescription(stock.code), priceArea.x + 230, priceArea.y + 18, "rgba(255,255,255,0.75)", 12);
 
   const volumeMax = Math.max(1, ...visibleVolume);
   const mapVolumeY = (value) => volumeArea.y + ((volumeMax - value) / volumeMax) * volumeArea.h;
