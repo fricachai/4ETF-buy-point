@@ -1125,8 +1125,6 @@ function renderChart(stock) {
       formatDate(hoveredCandle.date),
     );
   }
-  drawText("時間軸: 日資料吸附顯示", xAxisArea.x + 10, xAxisArea.y + 12, state.chartView.hoverZone === "xAxis" ? "#ffe27a" : "rgba(151,160,175,0.85)", 11);
-  drawText("價格軸: 滾輪縮放", priceScaleArea.x + priceScaleArea.w - 6, priceScaleArea.y + priceScaleArea.h + 16, state.chartView.hoverZone === "priceScale" ? "#7ab5ff" : "rgba(151,160,175,0.85)", 11, "right");
   return { effectiveTimeframe, fallback, lastClose: lastCandle.close };
 }
 
