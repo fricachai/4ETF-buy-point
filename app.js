@@ -35,7 +35,6 @@ const BUY_REMINDER_RULES = {
   "0056": { min: 6, max: 8, addOn: 8 },
   "00878": { min: 4.5, max: 5.5, addOn: 5 },
   "006208": { min: 5, max: 7, addOn: 7 },
-  "006204": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
   "TPE: IX0001": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
 };
 
@@ -44,7 +43,6 @@ const DEFAULT_STOCKS = [
   { code: "0056", name: "元大高股息" },
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
-  { code: "006204", name: "永豐台灣加權" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
 
@@ -54,7 +52,6 @@ const LEGACY_DEFAULT_STOCKS = [
 ];
 
 const KNOWN_STOCK_NAMES = {
-  "006204": "永豐台灣加權",
   "TPE: IX0001": "台灣加權指數",
   "0050": "元大台灣50",
   "0056": "元大高股息",
@@ -68,7 +65,6 @@ const ACTIVE_DEFAULT_STOCKS = [
   { code: "0056", name: "元大高股息" },
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
-  { code: "006204", name: "永豐台灣加權" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
 
@@ -77,7 +73,6 @@ const ACTIVE_KNOWN_STOCK_NAMES = {
   "0056": "元大高股息",
   "00878": "國泰永續高股息",
   "006208": "富邦台50",
-  "006204": "永豐台灣加權",
   "TPE: IX0001": "台灣加權指數",
   "2330": "台積電",
 };
@@ -95,10 +90,7 @@ const state = {
   chartLayout: null,
   timeframe: "1d",
   dragState: null,
-  "006204": "永豐台灣加權",
 };
-
-delete state["006204"];
 
 const AUTH_CONFIG = {
   usernames: ["frica", "jimmy"],
@@ -155,16 +147,17 @@ function migratePersistedWatchlist(persistedWatchlist) {
       return persistedWatchlist;
     }
     const additions = [
-      { code: "006204", name: ACTIVE_KNOWN_STOCK_NAMES["006204"] || "006204" },
       { code: "TPE: IX0001", name: ACTIVE_KNOWN_STOCK_NAMES["TPE: IX0001"] || "TPE: IX0001" },
     ];
     const target = persistedWatchlist
       ? {
-        stocks: [...persistedWatchlist.stocks],
+        stocks: persistedWatchlist.stocks.filter((stock) => canonicalizeCode(stock.code) !== "006204"),
         selectedCode: persistedWatchlist.selectedCode,
       }
       : null;
-    let changed = false;
+    let changed = Boolean(
+      persistedWatchlist?.stocks?.some((stock) => canonicalizeCode(stock.code) === "006204"),
+    );
     if (target?.stocks?.length) {
       additions.forEach((stock) => {
         if (!target.stocks.some((entry) => canonicalizeCode(entry.code) === canonicalizeCode(stock.code))) {
@@ -175,9 +168,12 @@ function migratePersistedWatchlist(persistedWatchlist) {
     }
     window.localStorage.setItem(WATCHLIST_MIGRATION_KEY, "1");
     if (!changed || !target) return persistedWatchlist;
+    const selectedCode = target.stocks.some((stock) => canonicalizeCode(stock.code) === canonicalizeCode(target.selectedCode))
+      ? target.selectedCode
+      : target.stocks[0]?.code || "";
     const payload = {
       stocks: target.stocks,
-      selectedCode: target.selectedCode || target.stocks[0]?.code || "",
+      selectedCode,
     };
     window.localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(payload));
     return payload;
@@ -1758,7 +1754,6 @@ function loadDemoData() {
   ACTIVE_DEFAULT_STOCKS.forEach(upsertStock);
   generateDemoCandles("0050", "元大台灣50", 50, 180);
   generateDemoCandles("2330", "台積電", 2330, 920);
-  generateDemoCandles("006204", "永豐台灣加權", 6204, 96);
   generateDemoCandles("TPE: IX0001", "台灣加權指數", 1001, 180);
   state.selectedCode = "0050";
   renderAll();
@@ -1775,7 +1770,6 @@ function loadDefaultEtfDemoData() {
   generateDemoCandles("0056", "元大高股息", 56, 36);
   generateDemoCandles("00878", "國泰永續高股息", 878, 21);
   generateDemoCandles("006208", "富邦台50", 6208, 108);
-  generateDemoCandles("006204", "永豐台灣加權", 6204, 96);
   generateDemoCandles("TPE: IX0001", "台灣加權指數", 1001, 180);
   state.selectedCode = "0050";
   renderAll();
