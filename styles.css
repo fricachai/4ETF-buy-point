@@ -547,7 +547,8 @@ input::placeholder {
   gap: 10px;
   padding: 13px 12px;
   border-bottom: 1px solid var(--line-soft);
-  cursor: pointer;
+  cursor: grab;
+  user-select: none;
   transition: background 0.2s ease, transform 0.2s ease;
   background: linear-gradient(90deg, rgba(247, 200, 67, 0.18), rgba(255, 255, 255, 0.06));
   box-shadow: inset 4px 0 0 rgba(247, 200, 67, 0.24);
@@ -562,6 +563,16 @@ input::placeholder {
   background: rgba(255, 255, 255, 0.94);
   box-shadow: inset 4px 0 0 var(--yellow);
   color: #111317;
+}
+
+.watch-item.dragging {
+  opacity: 0.42;
+  cursor: grabbing;
+}
+
+.watch-item.drop-target {
+  outline: 2px dashed rgba(255, 226, 122, 0.72);
+  outline-offset: -2px;
 }
 
 .watch-code {

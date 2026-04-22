@@ -65,6 +65,7 @@ const state = {
   rawCandlesByCode: new Map(),
   selectedCode: null,
   loadingCodes: new Set(),
+  watchlistDragCode: "",
   chartView: { visibleCount: 36, priceScale: 1, hoverZone: "", hoverX: null, hoverY: null, hoverIndex: null, barOffset: 0, panX: 0, panY: 0 },
   chartLayout: null,
   timeframe: "1d",
@@ -1228,6 +1229,7 @@ function renderWatchlist() {
         : "";
       const item = document.createElement("button");
       item.type = "button";
+      item.draggable = true;
       item.className = `watch-item ${stock.code === state.selectedCode ? "active" : ""}`;
         item.innerHTML = `
           <span class="watch-code">${stock.code}</span>
@@ -1247,6 +1249,43 @@ function renderWatchlist() {
           event.preventDefault();
           event.stopPropagation();
           removeStock(stock.code);
+        });
+        item.addEventListener("dragstart", (event) => {
+          state.watchlistDragCode = stock.code;
+          item.classList.add("dragging");
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", stock.code);
+          }
+        });
+        item.addEventListener("dragend", () => {
+          state.watchlistDragCode = "";
+          item.classList.remove("dragging");
+          watchlistEl.querySelectorAll(".drop-target").forEach((node) => {
+            node.classList.remove("drop-target");
+          });
+        });
+        item.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          if (!state.watchlistDragCode || state.watchlistDragCode === stock.code) return;
+          if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = "move";
+          }
+          watchlistEl.querySelectorAll(".drop-target").forEach((node) => {
+            if (node !== item) node.classList.remove("drop-target");
+          });
+          item.classList.add("drop-target");
+        });
+        item.addEventListener("dragleave", () => {
+          item.classList.remove("drop-target");
+        });
+        item.addEventListener("drop", (event) => {
+          event.preventDefault();
+          item.classList.remove("drop-target");
+          if (moveWatchItemBefore(state.watchlistDragCode, stock.code)) {
+            persistWatchlist();
+            renderWatchlist();
+          }
         });
         watchlistEl.appendChild(item);
       });
@@ -1284,6 +1323,26 @@ function upsertStock(stock) {
     state.stocks.push({ code: normalized, name });
   }
   if (!state.selectedCode) state.selectedCode = normalized;
+}
+
+function moveWatchItemBefore(dragCode, targetCode) {
+  if (!dragCode || !targetCode || dragCode === targetCode) return false;
+  const fromIndex = state.stocks.findIndex((item) => item.code === dragCode);
+  const targetIndex = state.stocks.findIndex((item) => item.code === targetCode);
+  if (fromIndex === -1 || targetIndex === -1) return false;
+
+  const next = [...state.stocks];
+  const [dragged] = next.splice(fromIndex, 1);
+  const insertIndex = next.findIndex((item) => item.code === targetCode);
+
+  if (insertIndex === -1) {
+    next.push(dragged);
+  } else {
+    next.splice(insertIndex, 0, dragged);
+  }
+
+  state.stocks = next;
+  return true;
 }
 
 function removeStock(code) {
