@@ -1102,30 +1102,55 @@ function renderChart(stock) {
     }
   }
 
-  let previousMonthKey = "";
   let lastLabelRight = xAxisArea.x - 1;
   ctx.save();
   ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
+  const monthMarkers = [];
+  let currentMonthKey = "";
+  let currentMonthCandles = [];
   for (let i = 0; i < visible.length; i += 1) {
-    const candle = visible[i];
-    const candleDate = new Date(candle.date);
+    const candleDate = new Date(visible[i].date);
     if (Number.isNaN(candleDate.getTime())) continue;
     const monthKey = `${candleDate.getFullYear()}-${candleDate.getMonth()}`;
-    if (monthKey === previousMonthKey) continue;
-    previousMonthKey = monthKey;
-    const label = formatDate(candle.date);
-    const labelWidth = ctx.measureText(label).width;
-    const x = clamp(
-      xAxisArea.x + i * candleWidth + candleWidth / 2 + panX,
-      xAxisArea.x + labelWidth / 2 + 4,
-      xAxisArea.x + xAxisArea.w - labelWidth / 2 - 4,
-    );
-    const left = x - labelWidth / 2;
-    const right = x + labelWidth / 2;
-    if (left <= lastLabelRight + 10) continue;
-    lastLabelRight = right;
-    drawText(label, x, xAxisArea.y + 24, "#97a0af", 12, "center");
+    if (monthKey !== currentMonthKey) {
+      if (currentMonthCandles.length) monthMarkers.push(currentMonthCandles);
+      currentMonthKey = monthKey;
+      currentMonthCandles = [{ index: i, candle: visible[i], date: candleDate }];
+    } else {
+      currentMonthCandles.push({ index: i, candle: visible[i], date: candleDate });
+    }
   }
+  if (currentMonthCandles.length) monthMarkers.push(currentMonthCandles);
+
+  monthMarkers.forEach((monthCandles) => {
+    const firstTrade = monthCandles[0];
+    const midTrade = monthCandles.reduce((best, entry) => {
+      const distance = Math.min(
+        Math.abs(entry.date.getDate() - 14),
+        Math.abs(entry.date.getDate() - 15),
+        Math.abs(entry.date.getDate() - 16),
+      );
+      if (!best) return { entry, distance };
+      return distance < best.distance ? { entry, distance } : best;
+    }, null)?.entry;
+
+    [firstTrade, midTrade]
+      .filter((entry, idx, arr) => entry && arr.findIndex((item) => item?.index === entry.index) === idx)
+      .forEach((entry) => {
+        const label = formatDate(entry.candle.date);
+        const x = clamp(
+          xAxisArea.x + entry.index * candleWidth + candleWidth / 2 + panX,
+          xAxisArea.x + ctx.measureText(label).width / 2 + 4,
+          xAxisArea.x + xAxisArea.w - ctx.measureText(label).width / 2 - 4,
+        );
+        const labelWidth = ctx.measureText(label).width;
+        const left = x - labelWidth / 2;
+        const right = x + labelWidth / 2;
+        if (left <= lastLabelRight + 10) return;
+        lastLabelRight = right;
+        drawText(label, x, xAxisArea.y + 24, "#97a0af", 12, "center");
+      });
+  });
   ctx.restore();
   if (hoveredCandle && state.chartView.hoverX != null) {
     drawXAxisHoverTag(
