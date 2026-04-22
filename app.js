@@ -925,9 +925,9 @@ function renderChart(stock) {
   });
   ctx.restore();
 
-  drawText("SMA5", priceArea.x + 10, priceArea.y + 18, "#36b4ff", 12);
-  drawText("SMA20", priceArea.x + 74, priceArea.y + 18, "#f7c843", 12);
-  drawText("SMA60", priceArea.x + 150, priceArea.y + 18, "#ff5e67", 12);
+  drawText("SMA5", priceArea.x + 10, priceArea.y + 18, "#7fd8ff", 12);
+  drawText("SMA20", priceArea.x + 74, priceArea.y + 18, "#ffe27a", 12);
+  drawText("SMA60", priceArea.x + 150, priceArea.y + 18, "#ff8f98", 12);
 
   const volumeMax = Math.max(1, ...visibleVolume);
   const mapVolumeY = (value) => volumeArea.y + ((volumeMax - value) / volumeMax) * volumeArea.h;
