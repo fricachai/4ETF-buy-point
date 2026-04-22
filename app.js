@@ -7,7 +7,6 @@ const watchlistEl = document.getElementById("watchlist");
 const stockForm = document.getElementById("stockForm");
 const codeInput = document.getElementById("codeInput");
 const nameInput = document.getElementById("nameInput");
-const removeStockButton = document.getElementById("removeStockButton");
 const searchInput = document.getElementById("searchInput");
 const statusText = document.getElementById("statusText");
 const watchlistFileInput = document.getElementById("watchlistFileInput");
@@ -1172,7 +1171,6 @@ function renderChart(stock) {
 function renderWatchlist() {
   const keyword = searchInput.value.trim().toLowerCase();
   watchlistEl.innerHTML = "";
-  removeStockButton.disabled = state.stocks.length <= 1 || !state.selectedCode;
   state.stocks
     .filter((stock) => !keyword || stock.code.toLowerCase().includes(keyword) || stock.name.toLowerCase().includes(keyword))
     .forEach((stock) => {
@@ -1183,21 +1181,27 @@ function renderWatchlist() {
       const item = document.createElement("button");
       item.type = "button";
       item.className = `watch-item ${stock.code === state.selectedCode ? "active" : ""}`;
-      item.innerHTML = `
-        <span class="watch-code">${stock.code}</span>
-        <span class="watch-name-row">
-          <span class="watch-name">${stock.name}</span>
-          ${reminderBadge}
-        </span>
-      `;
-      item.addEventListener("click", async () => {
-        state.selectedCode = stock.code;
-        resetChartView();
-        renderAll();
-        if (!state.rawCandlesByCode.has(stock.code)) await ensureStockData(stock.code, stock.name);
+        item.innerHTML = `
+          <span class="watch-code">${stock.code}</span>
+          <span class="watch-name-row">
+            <span class="watch-name">${stock.name}</span>
+            ${reminderBadge}
+          </span>
+          <span class="watch-remove" role="button" aria-label="移除 ${stock.code}" title="移除 ${stock.code}">×</span>
+        `;
+        item.addEventListener("click", async () => {
+          state.selectedCode = stock.code;
+          resetChartView();
+          renderAll();
+          if (!state.rawCandlesByCode.has(stock.code)) await ensureStockData(stock.code, stock.name);
+        });
+        item.querySelector(".watch-remove")?.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          removeStock(stock.code);
+        });
+        watchlistEl.appendChild(item);
       });
-      watchlistEl.appendChild(item);
-    });
 }
 
 function renderAll() {
@@ -1233,9 +1237,9 @@ function upsertStock(stock) {
   if (!state.selectedCode) state.selectedCode = normalized;
 }
 
-function removeSelectedStock() {
-  if (!state.selectedCode || state.stocks.length <= 1) return false;
-  const removeIndex = state.stocks.findIndex((entry) => entry.code === state.selectedCode);
+function removeStock(code) {
+  if (!code || state.stocks.length <= 1) return false;
+  const removeIndex = state.stocks.findIndex((entry) => entry.code === code);
   if (removeIndex < 0) return false;
   const [removed] = state.stocks.splice(removeIndex, 1);
   state.rawCandlesByCode.delete(removed.code);
@@ -1695,10 +1699,6 @@ stockForm.addEventListener("submit", async (event) => {
   resetChartView();
   renderAll();
   await ensureStockData(code, name);
-});
-
-removeStockButton.addEventListener("click", () => {
-  removeSelectedStock();
 });
 
 searchInput.addEventListener("input", renderWatchlist);

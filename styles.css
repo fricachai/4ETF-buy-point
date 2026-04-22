@@ -476,7 +476,7 @@ h3 {
 .stock-form,
 .watchlist-toolbar {
   display: grid;
-  grid-template-columns: 1fr 1fr auto auto;
+  grid-template-columns: 1fr 1fr auto;
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -543,7 +543,7 @@ input::placeholder {
 
 .watch-item {
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr);
+  grid-template-columns: 110px minmax(0, 1fr) 28px;
   gap: 10px;
   padding: 13px 12px;
   border-bottom: 1px solid var(--line-soft);
@@ -589,6 +589,37 @@ input::placeholder {
   min-width: 0;
 }
 
+.watch-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  align-self: center;
+  justify-self: end;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.watch-remove:hover {
+  background: rgba(255, 94, 103, 0.16);
+  color: #ffd9dc;
+  transform: scale(1.04);
+}
+
+.watch-item.active .watch-remove {
+  color: rgba(17, 19, 23, 0.72);
+}
+
+.watch-item.active .watch-remove:hover {
+  color: #b4232c;
+  background: rgba(255, 94, 103, 0.14);
+}
+
 .watch-alert-badge {
   flex: 0 0 auto;
   padding: 4px 8px;
@@ -605,18 +636,6 @@ input::placeholder {
   color: #9a4f00;
   background: rgba(255, 152, 17, 0.16);
   border-color: rgba(255, 152, 17, 0.45);
-}
-
-#removeStockButton {
-  border-color: rgba(255, 94, 103, 0.32);
-  background: linear-gradient(180deg, rgba(255, 94, 103, 0.18), rgba(255, 94, 103, 0.08));
-  color: #ffd9dc;
-}
-
-#removeStockButton:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-  filter: saturate(0.7);
 }
 
 @media (max-width: 1280px) {
