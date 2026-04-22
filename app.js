@@ -1097,8 +1097,10 @@ function renderChart(stock) {
       axisValueText = formatNumber(value, 2);
     }
     if (axisValueText) {
-      const axisArea = activeHorizontalArea === priceArea ? priceScaleArea : activeHorizontalArea;
-      drawAxisValueTag(axisArea, lineY, axisValueText, activeHorizontalArea === priceArea ? "center" : "right");
+      const axisArea = activeHorizontalArea === priceArea
+        ? priceScaleArea
+        : { x: priceScaleArea.x, y: activeHorizontalArea.y, w: priceScaleArea.w, h: activeHorizontalArea.h };
+      drawAxisValueTag(axisArea, lineY, axisValueText, "center");
     }
   }
 
