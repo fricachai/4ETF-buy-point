@@ -550,28 +550,18 @@ function formatDayOnly(dateStr) {
   return String(d.getDate());
 }
 
-function formatXAxisLabel(dateStr, anchorDateStr = "") {
-  if (!anchorDateStr) return formatDate(dateStr);
-  const current = new Date(dateStr);
-  const anchor = new Date(anchorDateStr);
-  if (Number.isNaN(current.getTime()) || Number.isNaN(anchor.getTime())) return formatDate(dateStr);
-  if (current.getFullYear() === anchor.getFullYear() && current.getMonth() === anchor.getMonth()) {
-    return formatDayOnly(dateStr);
-  }
-  return formatDate(dateStr);
-}
-
 function drawAxisValueTag(area, y, valueText, side = "left") {
   const paddingX = 8;
   const height = 20;
   const radius = 8;
+  const textBaselineY = clamp(y + 4, area.y + 14, area.y + area.h - 6);
   ctx.save();
   ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
   const width = ctx.measureText(valueText).width + paddingX * 2;
   const boxX = side === "right" ? area.x + area.w - width - 6 : area.x + 6;
-  const boxY = clamp(y - height / 2, area.y, area.y + area.h - height);
+  const boxY = clamp(textBaselineY - 14, area.y, area.y + area.h - height);
   drawRoundRect(boxX, boxY, width, height, radius, "rgba(18, 21, 27, 0.94)", "rgba(255,255,255,0.24)");
-  drawText(valueText, boxX + width / 2, boxY + 14, "#f5f6fa", 12, "center");
+  drawText(valueText, boxX + width / 2, textBaselineY, "#f5f6fa", 12, "center");
   ctx.restore();
 }
 
@@ -1108,17 +1098,17 @@ function renderChart(stock) {
     }
   }
 
-  const tickStep = Math.max(1, Math.ceil(visible.length / 8));
-  let anchorDate = "";
-  for (let i = 0; i < visible.length; i += tickStep) {
+  let previousMonthKey = "";
+  for (let i = 0; i < visible.length; i += 1) {
     const candle = visible[i];
-    const label = formatXAxisLabel(candle.date, anchorDate);
-    if (!anchorDate) anchorDate = candle.date;
+    const candleDate = new Date(candle.date);
+    if (Number.isNaN(candleDate.getTime())) continue;
+    const monthKey = `${candleDate.getFullYear()}-${candleDate.getMonth()}`;
+    if (monthKey === previousMonthKey) continue;
+    previousMonthKey = monthKey;
     const x = xAxisArea.x + i * candleWidth + candleWidth / 2 + panX;
-    drawText(label, x, xAxisArea.y + 24, "#97a0af", 12, "center");
+    drawText(formatDate(candle.date), x, xAxisArea.y + 24, "#97a0af", 12, "center");
   }
-  const lastLabel = formatXAxisLabel(visible[visible.length - 1].date, anchorDate);
-  drawText(lastLabel, xAxisArea.x + xAxisArea.w - 4, xAxisArea.y + 24, "#97a0af", 12, "right");
   if (hoveredCandle && state.chartView.hoverX != null) {
     drawXAxisHoverTag(
       xAxisArea,
