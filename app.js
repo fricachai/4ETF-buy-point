@@ -1006,7 +1006,8 @@ function renderChart(stock) {
   ctx.clip();
   [20, 50, 80].forEach((level) => {
     const y = mapKdY(level);
-    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.strokeStyle = level === 50 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.28)";
+    ctx.lineWidth = level === 50 ? 1 : 1.2;
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
     ctx.moveTo(kdjArea.x, y);
