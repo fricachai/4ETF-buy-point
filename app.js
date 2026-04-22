@@ -833,7 +833,7 @@ function renderChart(stock) {
   for (let i = 0; i <= 5; i += 1) {
     const price = maxPrice - ((maxPrice - minPrice) / 5) * i;
     const y = priceArea.y + (priceArea.h / 5) * i;
-    drawText((round(price, 2) ?? price).toFixed(2), priceScaleArea.x + priceScaleArea.w / 2, y + 4, "#c8d0dd", 12, "center");
+    drawText((round(price, 2) ?? price).toFixed(2), priceScaleArea.x + priceScaleArea.w / 2, y + 4, "#ffffff", 12, "center");
   }
 
   ctx.strokeStyle = "rgba(255,255,255,0.12)";
@@ -1006,8 +1006,8 @@ function renderChart(stock) {
   ctx.clip();
   [20, 50, 80].forEach((level) => {
     const y = mapKdY(level);
-    ctx.strokeStyle = level === 50 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.28)";
-    ctx.lineWidth = level === 50 ? 1 : 1.2;
+    ctx.strokeStyle = level === 50 ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.45)";
+    ctx.lineWidth = level === 50 ? 1 : 1.5;
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
     ctx.moveTo(kdjArea.x, y);
@@ -1148,7 +1148,7 @@ function renderChart(stock) {
         const right = x + labelWidth / 2;
         if (left <= lastLabelRight + 10) return;
         lastLabelRight = right;
-        drawText(label, x, xAxisArea.y + 24, "#97a0af", 12, "center");
+        drawText(label, x, xAxisArea.y + 24, "#ffffff", 12, "center");
       });
   });
   ctx.restore();
