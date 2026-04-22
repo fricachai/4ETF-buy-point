@@ -35,6 +35,8 @@ const BUY_REMINDER_RULES = {
   "0056": { min: 6, max: 8, addOn: 8 },
   "00878": { min: 4.5, max: 5.5, addOn: 5 },
   "006208": { min: 5, max: 7, addOn: 7 },
+  "006204": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
+  "TPE: IX0001": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
 };
 
 const DEFAULT_STOCKS = [
@@ -42,6 +44,8 @@ const DEFAULT_STOCKS = [
   { code: "0056", name: "元大高股息" },
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
+  { code: "006204", name: "永豐台灣加權" },
+  { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
 
 const LEGACY_DEFAULT_STOCKS = [
@@ -50,10 +54,31 @@ const LEGACY_DEFAULT_STOCKS = [
 ];
 
 const KNOWN_STOCK_NAMES = {
+  "006204": "永豐台灣加權",
+  "TPE: IX0001": "台灣加權指數",
   "0050": "元大台灣50",
   "0056": "元大高股息",
   "00878": "國泰永續高股息",
   "006208": "富邦台50",
+  "2330": "台積電",
+};
+
+const ACTIVE_DEFAULT_STOCKS = [
+  { code: "0050", name: "元大台灣50" },
+  { code: "0056", name: "元大高股息" },
+  { code: "00878", name: "國泰永續高股息" },
+  { code: "006208", name: "富邦台50" },
+  { code: "006204", name: "永豐台灣加權" },
+  { code: "TPE: IX0001", name: "台灣加權指數" },
+];
+
+const ACTIVE_KNOWN_STOCK_NAMES = {
+  "0050": "元大台灣50",
+  "0056": "元大高股息",
+  "00878": "國泰永續高股息",
+  "006208": "富邦台50",
+  "006204": "永豐台灣加權",
+  "TPE: IX0001": "台灣加權指數",
   "2330": "台積電",
 };
 
@@ -70,7 +95,10 @@ const state = {
   chartLayout: null,
   timeframe: "1d",
   dragState: null,
+  "006204": "永豐台灣加權",
 };
+
+delete state["006204"];
 
 const AUTH_CONFIG = {
   usernames: ["frica", "jimmy"],
@@ -78,6 +106,7 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v2";
 
 let appStarted = false;
 
@@ -117,6 +146,43 @@ function loadPersistedWatchlist() {
     return { stocks, selectedCode };
   } catch {
     return null;
+  }
+}
+
+function migratePersistedWatchlist(persistedWatchlist) {
+  try {
+    if (window.localStorage.getItem(WATCHLIST_MIGRATION_KEY) === "1") {
+      return persistedWatchlist;
+    }
+    const additions = [
+      { code: "006204", name: ACTIVE_KNOWN_STOCK_NAMES["006204"] || "006204" },
+      { code: "TPE: IX0001", name: ACTIVE_KNOWN_STOCK_NAMES["TPE: IX0001"] || "TPE: IX0001" },
+    ];
+    const target = persistedWatchlist
+      ? {
+        stocks: [...persistedWatchlist.stocks],
+        selectedCode: persistedWatchlist.selectedCode,
+      }
+      : null;
+    let changed = false;
+    if (target?.stocks?.length) {
+      additions.forEach((stock) => {
+        if (!target.stocks.some((entry) => canonicalizeCode(entry.code) === canonicalizeCode(stock.code))) {
+          target.stocks.push(stock);
+          changed = true;
+        }
+      });
+    }
+    window.localStorage.setItem(WATCHLIST_MIGRATION_KEY, "1");
+    if (!changed || !target) return persistedWatchlist;
+    const payload = {
+      stocks: target.stocks,
+      selectedCode: target.selectedCode || target.stocks[0]?.code || "",
+    };
+    window.localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(payload));
+    return payload;
+  } catch {
+    return persistedWatchlist;
   }
 }
 
@@ -195,11 +261,13 @@ function describeFetchError(error) {
 function canonicalizeCode(rawCode) {
   const code = String(rawCode || "").trim().toUpperCase();
   if (!code) return "";
+  if (["IX0001", "TPE:IX0001", "TPE: IX0001"].includes(code)) return "TPE: IX0001";
   if (["大盤", "TAIEX", "TWII", "^TWII", "加權指數"].includes(code)) return "大盤";
   return code;
 }
 
 function isMarketIndexCode(code) {
+  if (canonicalizeCode(code) === "TPE: IX0001") return true;
   return canonicalizeCode(code) === "大盤";
 }
 
@@ -415,6 +483,9 @@ function formatRulePercent(value) {
 
 function formatBuyReminderRule(code) {
   const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") {
+    return `K ${formatRulePercent(rule.rangeMin)}~${formatRulePercent(rule.rangeMax)} / K<${formatRulePercent(rule.oversoldMax)}`;
+  }
   return rule.min === rule.max
     ? `-${formatRulePercent(rule.min)}%`
     : `-${formatRulePercent(rule.min)}% ~ -${formatRulePercent(rule.max)}%`;
@@ -422,8 +493,29 @@ function formatBuyReminderRule(code) {
 
 function formatBuyReminderDescription(code) {
   const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") {
+    return `買點：K指標 ${formatRulePercent(rule.rangeMin)}~${formatRulePercent(rule.rangeMax)} 或 K<${formatRulePercent(rule.oversoldMax)}`;
+  }
   const rangeText = rule.min === rule.max ? `-${rule.min}%` : `-${rule.min}% ~ -${rule.max}%`;
   return `買點：10個交易日收盤價跌幅 ${rangeText} ( -${rule.addOn}% 時加碼 報酬率最高)`;
+}
+
+function formatLatestReminderSummary(code, latestSignal) {
+  if (!latestSignal) return "";
+  const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") {
+    return `K值 ${formatNumber(latestSignal.kValue, 2)}`;
+  }
+  return `累計跌幅 ${formatNumber(latestSignal.dropPct, 2)}%`;
+}
+
+function formatLatestReminderBadge(code, latestSignal) {
+  if (!latestSignal?.inRange) return "";
+  const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") {
+    return `K ${formatNumber(latestSignal.kValue, 2)}`;
+  }
+  return `${formatNumber(latestSignal.dropPct, 2)}%`;
 }
 
 function calculateDrawdownWindow(candles, endIndex, rule, lookback = BUY_REMINDER_LOOKBACK) {
@@ -472,6 +564,41 @@ function detectDrawdownBuySignals(candles, code) {
       });
     }
     if (i === candles.length - 1) latestSignal = drawdown;
+  }
+
+  return { signals, latestSignal };
+}
+
+function detectKdRangeBuySignals(candles, kd, code) {
+  const signals = [];
+  let latestSignal = null;
+  const rule = getBuyReminderRule(code);
+
+  for (let i = 0; i < candles.length; i += 1) {
+    const kValue = kd.k[i];
+    if (!Number.isFinite(kValue)) continue;
+    const inOversold = kValue < rule.oversoldMax;
+    const inBand = kValue >= rule.rangeMin && kValue <= rule.rangeMax;
+    latestSignal = {
+      index: i,
+      kValue,
+      inRange: inBand || inOversold,
+    };
+    if (inOversold) {
+      signals.push({
+        index: i,
+        type: "drop-buy",
+        label: `${formatMonthDay(candles[i].date)} K<20`,
+        kValue,
+      });
+    } else if (inBand) {
+      signals.push({
+        index: i,
+        type: "drop-buy",
+        label: `${formatMonthDay(candles[i].date)} K: 20~30`,
+        kValue,
+      });
+    }
   }
 
   return { signals, latestSignal };
@@ -686,8 +813,13 @@ function getDisplayCandles(code) {
   return aggregateCandles(state.rawCandlesByCode.get(code) || [], state.timeframe);
 }
 
-function getBuyReminderData(code) {
-  const dailyCandles = aggregateCandles(state.rawCandlesByCode.get(code) || [], "1d").candles;
+function getBuyReminderData(code, candlesOverride = null, kdOverride = null) {
+  const dailyCandles = candlesOverride || aggregateCandles(state.rawCandlesByCode.get(code) || [], "1d").candles;
+  const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") {
+    const kd = kdOverride || computeKd(dailyCandles);
+    return detectKdRangeBuySignals(dailyCandles, kd, code);
+  }
   return detectDrawdownBuySignals(dailyCandles, code);
 }
 
@@ -753,7 +885,7 @@ function renderChart(stock) {
   const kd = computeKd(candles);
   const cci = computeCci(candles);
   const cciMa = sma(cci, 14);
-  const buySignalData = detectDrawdownBuySignals(candles, stock.code);
+  const buySignalData = getBuyReminderData(stock.code, candles, kd);
   const buySignals = buySignalData.signals;
   const lastCandle = candles[candles.length - 1];
   const prevClose = candles[candles.length - 2]?.close ?? lastCandle.close;
@@ -789,7 +921,7 @@ function renderChart(stock) {
   );
 
   if (buySignalData.latestSignal?.inRange) {
-    drawText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / 目前跌幅 ${round(buySignalData.latestSignal.dropPct, 2)}%`, 660, 42, "#ffb347", 16);
+    drawText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, 660, 42, "#ffb347", 16);
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
@@ -1225,7 +1357,7 @@ function renderWatchlist() {
     .forEach((stock) => {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const reminderBadge = reminder?.inRange
-        ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatNumber(reminder.dropPct, 2)}%</span>`
+        ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
       const item = document.createElement("button");
       item.type = "button";
@@ -1300,7 +1432,7 @@ function renderAll() {
   const chartResult = renderChart(stock);
   const latestReminder = getBuyReminderData(stock.code).latestSignal;
   const reminderText = latestReminder
-    ? ` | ${formatBuyReminderDescription(stock.code)} | 累計跌幅 ${formatNumber(latestReminder.dropPct, 2)}%`
+    ? ` | ${formatBuyReminderDescription(stock.code)} | ${formatLatestReminderSummary(stock.code, latestReminder)}`
     : "";
   chartTitle.textContent = `${stock.code} ${stock.name}`;
   const changeText = chartResult.lastClose != null
@@ -1476,12 +1608,12 @@ async function fetchCachedCandles(path) {
 
 async function fetchCachedStockData(code, fallbackName) {
   const candles = await fetchCachedCandles(`./data/${code}.json`);
-  return { code, name: fallbackName || KNOWN_STOCK_NAMES[code] || code, candles };
+  return { code, name: fallbackName || ACTIVE_KNOWN_STOCK_NAMES[code] || code, candles };
 }
 
 async function fetchTaiexData() {
   const candles = await fetchCachedCandles("./data/taiex.json");
-  return { code: "大盤", name: "加權指數", candles };
+  return { code: "TPE: IX0001", name: "台灣加權指數", candles };
 }
 
 async function fetchInstrumentData(code) {
@@ -1623,9 +1755,11 @@ function loadDemoData() {
   state.rawCandlesByCode.clear();
   state.timeframe = "1d";
   timeframeSelect.value = "1d";
-  DEFAULT_STOCKS.forEach(upsertStock);
+  ACTIVE_DEFAULT_STOCKS.forEach(upsertStock);
   generateDemoCandles("0050", "元大台灣50", 50, 180);
   generateDemoCandles("2330", "台積電", 2330, 920);
+  generateDemoCandles("006204", "永豐台灣加權", 6204, 96);
+  generateDemoCandles("TPE: IX0001", "台灣加權指數", 1001, 180);
   state.selectedCode = "0050";
   renderAll();
   setStatus("官方資料與站內快取都暫時無法取得，才會改用 0050 / 台積電 示範資料。", "success");
@@ -1636,11 +1770,13 @@ function loadDefaultEtfDemoData() {
   state.rawCandlesByCode.clear();
   state.timeframe = "1d";
   timeframeSelect.value = "1d";
-  DEFAULT_STOCKS.forEach(upsertStock);
+  ACTIVE_DEFAULT_STOCKS.forEach(upsertStock);
   generateDemoCandles("0050", "元大台灣50", 50, 180);
   generateDemoCandles("0056", "元大高股息", 56, 36);
   generateDemoCandles("00878", "國泰永續高股息", 878, 21);
   generateDemoCandles("006208", "富邦台50", 6208, 108);
+  generateDemoCandles("006204", "永豐台灣加權", 6204, 96);
+  generateDemoCandles("TPE: IX0001", "台灣加權指數", 1001, 180);
   state.selectedCode = "0050";
   renderAll();
   setStatus("官方資料與站內快取都暫時無法取得，已改用 0050、0056、00878、006208 示範資料。", "success");
@@ -1852,7 +1988,7 @@ async function bootstrap() {
   initAuthorCardEffects();
   state.stocks = [];
   state.rawCandlesByCode.clear();
-  DEFAULT_STOCKS.forEach(upsertStock);
+  ACTIVE_DEFAULT_STOCKS.forEach(upsertStock);
   state.selectedCode = "0050";
   renderAll();
   const [stockOk, indexOk] = await Promise.all([
@@ -1865,8 +2001,8 @@ async function bootstrap() {
 }
 
 async function bootstrapDefaultEtfs() {
-  const persistedWatchlist = loadPersistedWatchlist();
-  const initialStocks = persistedWatchlist?.stocks?.length ? persistedWatchlist.stocks : DEFAULT_STOCKS;
+  const persistedWatchlist = migratePersistedWatchlist(loadPersistedWatchlist());
+  const initialStocks = persistedWatchlist?.stocks?.length ? persistedWatchlist.stocks : ACTIVE_DEFAULT_STOCKS;
   state.stocks = [];
   state.rawCandlesByCode.clear();
   initialStocks.forEach(upsertStock);
