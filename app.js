@@ -1713,6 +1713,34 @@ async function ensureStockData(code, preferredName = "") {
   }
 }
 
+async function ensureLookupStockData(code) {
+  const normalizedCode = canonicalizeCode(code);
+  if (!normalizedCode || state.loadingCodes.has(normalizedCode)) return false;
+  state.loadingCodes.add(normalizedCode);
+  setStatus(`正在透過 Cloudflare Worker 抓取 ${normalizedCode} 的 TWSE 官方資料...`);
+  try {
+    const result = isMarketIndexCode(normalizedCode)
+      ? await fetchInstrumentData(normalizedCode)
+      : await fetchTwseStockData(normalizedCode);
+    upsertStock({ code: result.code, name: result.name });
+    state.rawCandlesByCode.set(normalizedCode, result.candles);
+    state.selectedCode = normalizedCode;
+    renderAll();
+    setStatus(`已載入 ${normalizedCode} ${result.name} 的官方日 K 資料。`, "success");
+    return true;
+  } catch (error) {
+    const errorMessage = describeFetchError(error);
+    if (isMarketIndexCode(normalizedCode)) {
+      setStatus(`大盤載入失敗：${errorMessage}`, "error");
+    } else {
+      setStatus(`${normalizedCode} 載入失敗：${errorMessage}`, "error");
+    }
+    return false;
+  } finally {
+    state.loadingCodes.delete(normalizedCode);
+  }
+}
+
 async function loadWatchlistRows(rows) {
   rows.forEach((row) => {
     if (!row.code) return;
@@ -1996,9 +2024,8 @@ timeframeSelect.addEventListener("change", () => {
 stockForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const code = canonicalizeCode(codeInput.value.trim());
-  const name = nameInput.value.trim();
   if (!code) return setStatus("請輸入股票代號。", "error");
-  const ok = await ensureStockData(code, name);
+  const ok = await ensureLookupStockData(code);
   if (ok) {
     codeInput.value = "";
     nameInput.value = "";
