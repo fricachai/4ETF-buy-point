@@ -585,8 +585,8 @@ input::placeholder {
   display: grid;
   grid-template-columns: 102px minmax(0, 1fr) 78px 24px;
   gap: 6px;
-  min-height: 68px;
-  padding: 10px 12px;
+  min-height: 56px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--line-soft);
   cursor: grab;
   user-select: none;
