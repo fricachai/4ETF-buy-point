@@ -534,6 +534,15 @@ input::placeholder {
   padding: 10px 12px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+
+.watchlist-header span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  text-align: center;
 }
 
 .status-text {
@@ -571,7 +580,8 @@ input::placeholder {
   display: grid;
   grid-template-columns: 110px minmax(0, 1fr) 88px 28px;
   gap: 10px;
-  padding: 13px 12px;
+  min-height: 68px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--line-soft);
   cursor: grab;
   user-select: none;
@@ -579,6 +589,7 @@ input::placeholder {
   background: linear-gradient(90deg, rgba(247, 200, 67, 0.18), rgba(255, 255, 255, 0.06));
   box-shadow: inset 4px 0 0 rgba(247, 200, 67, 0.24);
   color: #ffffff;
+  align-items: center;
 }
 
 .watch-item:hover {
@@ -602,12 +613,19 @@ input::placeholder {
 }
 
 .watch-code {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
   font-weight: 700;
   color: #ffe27a;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .watch-item .watch-name {
   color: #ffffff;
+  line-height: 1.2;
 }
 
 .watch-item.active .watch-code {
@@ -624,14 +642,20 @@ input::placeholder {
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
+  min-height: 24px;
 }
 
 .watch-quote {
+  display: flex;
   align-self: center;
+  align-items: center;
   justify-self: end;
+  justify-content: flex-end;
+  min-height: 24px;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: #f3f6fb;
+  line-height: 1.2;
 }
 
 .watch-quote.up {
