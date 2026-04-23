@@ -822,6 +822,78 @@ function getBuyReminderData(code, candlesOverride = null, kdOverride = null) {
   return detectDrawdownBuySignals(dailyCandles, code);
 }
 
+function getTradingDateKeyFromIso(isoString) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-CA", { timeZone: "Asia/Taipei" });
+}
+
+function mergeRealtimeQuoteIntoCandles(rawCandles, realtimeQuote) {
+  const candles = (rawCandles || []).map((candle) => ({ ...candle }));
+  if (!realtimeQuote || !Number.isFinite(realtimeQuote.price)) return candles;
+
+  const tradeDateKey = realtimeQuote.tradeDate
+    ? `${realtimeQuote.tradeDate.slice(0, 4)}-${realtimeQuote.tradeDate.slice(4, 6)}-${realtimeQuote.tradeDate.slice(6, 8)}`
+    : "";
+  const candleDate = realtimeQuote.candleDate || new Date().toISOString();
+  const open = firstFiniteNumber(realtimeQuote.open, realtimeQuote.previousClose, realtimeQuote.price);
+  const highBase = firstFiniteNumber(realtimeQuote.high, realtimeQuote.price, open);
+  const lowBase = firstFiniteNumber(realtimeQuote.low, realtimeQuote.price, open);
+
+  const nextCandle = {
+    date: candleDate,
+    open,
+    high: Math.max(highBase ?? realtimeQuote.price, realtimeQuote.price, open ?? realtimeQuote.price),
+    low: Math.min(lowBase ?? realtimeQuote.price, realtimeQuote.price, open ?? realtimeQuote.price),
+    close: realtimeQuote.price,
+    volume: realtimeQuote.volume ?? 0,
+  };
+
+  const existingIndex = candles.findIndex((candle) => getTradingDateKeyFromIso(candle.date) === tradeDateKey);
+  if (existingIndex >= 0) {
+    const current = candles[existingIndex];
+    candles[existingIndex] = {
+      ...current,
+      date: current.date || nextCandle.date,
+      open: firstFiniteNumber(current.open, nextCandle.open),
+      high: Math.max(firstFiniteNumber(current.high, nextCandle.high) ?? nextCandle.high, nextCandle.close),
+      low: Math.min(firstFiniteNumber(current.low, nextCandle.low) ?? nextCandle.low, nextCandle.close),
+      close: nextCandle.close,
+      volume: Math.max(current.volume ?? 0, nextCandle.volume ?? 0),
+    };
+    return candles;
+  }
+
+  candles.push(nextCandle);
+  candles.sort((a, b) => new Date(a.date) - new Date(b.date));
+  return candles;
+}
+
+function getDisplayCandles(code) {
+  const merged = mergeRealtimeQuoteIntoCandles(
+    state.rawCandlesByCode.get(code) || [],
+    state.realtimeQuotesByCode.get(code),
+  );
+  return aggregateCandles(merged, state.timeframe);
+}
+
+function getBuyReminderData(code, candlesOverride = null, kdOverride = null) {
+  const mergedDailyCandles = candlesOverride
+    || aggregateCandles(
+      mergeRealtimeQuoteIntoCandles(
+        state.rawCandlesByCode.get(code) || [],
+        state.realtimeQuotesByCode.get(code),
+      ),
+      "1d",
+    ).candles;
+  const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") {
+    const kd = kdOverride || computeKd(mergedDailyCandles);
+    return detectKdRangeBuySignals(mergedDailyCandles, kd, code);
+  }
+  return detectDrawdownBuySignals(mergedDailyCandles, code);
+}
+
 function resetChartView() {
   state.chartView.visibleCount = 36;
   state.chartView.priceScale = 1;
@@ -1741,6 +1813,10 @@ function normalizeRealtimeQuote(row, fallbackName = "") {
     changeValue,
     changePct,
     asOf: formatRealtimeTimestamp(row?.d, row?.t, row?.tlong),
+    tradeDate: /^\d{8}$/.test(String(row?.d || "").trim()) ? String(row.d).trim() : "",
+    candleDate: /^\d{8}$/.test(String(row?.d || "").trim())
+      ? new Date(`${String(row.d).slice(0, 4)}-${String(row.d).slice(4, 6)}-${String(row.d).slice(6, 8)}T09:00:00+08:00`).toISOString()
+      : "",
   };
 }
 
