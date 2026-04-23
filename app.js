@@ -86,6 +86,7 @@ const state = {
   rawCandlesByCode: new Map(),
   realtimeQuotesByCode: new Map(),
   selectedCode: null,
+  showSignalTags: true,
   loadingCodes: new Set(),
   watchlistDragCode: "",
   chartView: { visibleCount: 36, priceScale: 1, hoverZone: "", hoverX: null, hoverY: null, hoverIndex: null, barOffset: 0, panX: 0, panY: 0 },
@@ -966,11 +967,12 @@ function renderChart(stock) {
   const priceArea = { x: 42, y: 32, w: 1120, h: 380 };
   const xAxisArea = { x: 42, y: 428, w: 1120, h: 38 };
   const priceScaleArea = { x: 1162, y: 32, w: 78, h: 390 };
+  const signalToggleArea = { x: 1162, y: 428, w: 78, h: 38 };
   const cciArea = { x: 42, y: 498, w: 1198, h: 88 };
   const kdjArea = { x: 42, y: 622, w: 1198, h: 92 };
   const macdArea = { x: 42, y: 750, w: 1198, h: 92 };
   const volumeArea = { x: 42, y: 878, w: 1198, h: 92 };
-  state.chartLayout = { priceArea, xAxisArea, priceScaleArea, volumeArea, macdArea, kdjArea, cciArea };
+  state.chartLayout = { priceArea, xAxisArea, priceScaleArea, signalToggleArea, volumeArea, macdArea, kdjArea, cciArea };
 
   drawRoundRect(
     xAxisArea.x,
@@ -990,6 +992,20 @@ function renderChart(stock) {
     state.chartView.hoverZone === "priceScale" ? "rgba(41,105,255,0.08)" : "rgba(255,255,255,0.03)",
     state.chartView.hoverZone === "priceScale" ? "rgba(41,105,255,0.45)" : null,
   );
+  drawRoundRect(
+    signalToggleArea.x,
+    signalToggleArea.y,
+    signalToggleArea.w,
+    signalToggleArea.h,
+    8,
+    state.chartView.hoverZone === "signalToggle"
+      ? "rgba(255,255,255,0.10)"
+      : state.showSignalTags
+        ? "rgba(255,196,67,0.16)"
+        : "rgba(255,255,255,0.04)",
+    state.showSignalTags ? "rgba(255,196,67,0.42)" : "rgba(255,255,255,0.14)",
+  );
+  drawText(state.showSignalTags ? "標籤 開" : "標籤 關", signalToggleArea.x + signalToggleArea.w / 2, signalToggleArea.y + 24, "#ffffff", 12, "center");
 
   if (buySignalData.latestSignal?.inRange) {
     drawText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, 660, 42, "#ffb347", 16);
@@ -1028,6 +1044,7 @@ function renderChart(stock) {
     priceArea,
     xAxisArea,
     priceScaleArea,
+    signalToggleArea,
     volumeArea,
     macdArea,
     kdjArea,
@@ -1121,61 +1138,63 @@ function renderChart(stock) {
   drawLineSeries(priceArea, candleWidth, panX, visibleSma60, mapPriceY, "#ff5e67", 2.2);
   ctx.restore();
 
-  const placedSignalBoxes = [];
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(priceArea.x, priceArea.y, priceArea.w, priceArea.h);
-  ctx.clip();
-  visibleSignals.forEach((signal) => {
-    const candle = visible[signal.visibleIndex];
-    const x = priceArea.x + signal.visibleIndex * candleWidth + candleWidth / 2 + panX;
-    const { width, height } = getSignalTagMetrics(signal.label);
-    const baseY = mapPriceY(candle.high) - 54;
-    const initialBoxY = baseY - height;
-    const initialBoxBottom = initialBoxY + height;
-    const initialInBounds = (
-      x - width / 2 >= priceArea.x + 4
-      && x + width / 2 <= priceArea.x + priceArea.w - 4
-      && initialBoxY >= priceArea.y + 36
-      && initialBoxBottom <= priceArea.y + priceArea.h - 20
-    );
-    if (!initialInBounds) return;
-
-    let drawY = baseY;
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      const boxX = x - width / 2;
-      const boxY = drawY - height;
-      const boxBottom = boxY + height;
-      const inBounds = (
-        boxX >= priceArea.x + 4
-        && boxX + width <= priceArea.x + priceArea.w - 4
-        && boxY >= priceArea.y + 36
-        && boxBottom <= priceArea.y + priceArea.h - 20
+  if (state.showSignalTags) {
+    const placedSignalBoxes = [];
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(priceArea.x, priceArea.y, priceArea.w, priceArea.h);
+    ctx.clip();
+    visibleSignals.forEach((signal) => {
+      const candle = visible[signal.visibleIndex];
+      const x = priceArea.x + signal.visibleIndex * candleWidth + candleWidth / 2 + panX;
+      const { width, height } = getSignalTagMetrics(signal.label);
+      const baseY = mapPriceY(candle.high) - 54;
+      const initialBoxY = baseY - height;
+      const initialBoxBottom = initialBoxY + height;
+      const initialInBounds = (
+        x - width / 2 >= priceArea.x + 4
+        && x + width / 2 <= priceArea.x + priceArea.w - 4
+        && initialBoxY >= priceArea.y + 36
+        && initialBoxBottom <= priceArea.y + priceArea.h - 20
       );
-      if (!inBounds) break;
+      if (!initialInBounds) return;
 
-      const overlaps = placedSignalBoxes.some((rect) => (
-        boxX < rect.right + 10
-        && boxX + width > rect.left - 10
-        && boxY < rect.bottom + 12
-        && boxBottom > rect.top - 12
-      ));
+      let drawY = baseY;
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const boxX = x - width / 2;
+        const boxY = drawY - height;
+        const boxBottom = boxY + height;
+        const inBounds = (
+          boxX >= priceArea.x + 4
+          && boxX + width <= priceArea.x + priceArea.w - 4
+          && boxY >= priceArea.y + 36
+          && boxBottom <= priceArea.y + priceArea.h - 20
+        );
+        if (!inBounds) break;
 
-      if (!overlaps) {
-        drawSignalTag(x, drawY, signal.label, signal.type);
-        placedSignalBoxes.push({
-          left: boxX,
-          right: boxX + width,
-          top: boxY,
-          bottom: boxBottom,
-        });
-        return;
+        const overlaps = placedSignalBoxes.some((rect) => (
+          boxX < rect.right + 10
+          && boxX + width > rect.left - 10
+          && boxY < rect.bottom + 12
+          && boxBottom > rect.top - 12
+        ));
+
+        if (!overlaps) {
+          drawSignalTag(x, drawY, signal.label, signal.type);
+          placedSignalBoxes.push({
+            left: boxX,
+            right: boxX + width,
+            top: boxY,
+            bottom: boxBottom,
+          });
+          return;
+        }
+
+        drawY -= height + 18;
       }
-
-      drawY -= height + 18;
-    }
-  });
-  ctx.restore();
+    });
+    ctx.restore();
+  }
 
   drawText("SMA5", priceArea.x + 10, priceArea.y + 18, "#7fd8ff", 12);
   drawText("SMA20", priceArea.x + 74, priceArea.y + 18, "#ffe27a", 12);
@@ -2216,6 +2235,7 @@ function detectChartZone(point) {
   if (inBox(layout.kdjArea)) return "kdjArea";
   if (inBox(layout.xAxisArea)) return "xAxis";
   if (inBox(layout.priceScaleArea)) return "priceScale";
+  if (layout.signalToggleArea && inBox(layout.signalToggleArea)) return "signalToggle";
   return "";
 }
 
@@ -2307,6 +2327,8 @@ canvas.addEventListener("pointermove", (event) => {
     ? "ew-resize"
       : zone === "priceScale"
         ? "ns-resize"
+        : zone === "signalToggle"
+          ? "pointer"
         : ["priceArea", "volumeArea", "cciArea", "macdArea", "kdjArea"].includes(zone)
           ? "crosshair"
           : "default";
@@ -2328,6 +2350,12 @@ canvas.addEventListener("pointerdown", (event) => {
   if (event.button !== 0) return;
   const point = getCanvasPoint(event);
   const zone = detectChartZone(point);
+  if (zone === "signalToggle") {
+    event.preventDefault();
+    state.showSignalTags = !state.showSignalTags;
+    renderAll();
+    return;
+  }
   if (zone !== "priceArea" || !state.chartLayout) return;
   event.preventDefault();
   const { candles } = getDisplayCandles(state.selectedCode);
