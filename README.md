@@ -1,5 +1,42 @@
 # Stock_K-chat
 
+## Cloudflare Worker 部署
+
+這個專案的右側觀察清單要穩定抓到最新資料，建議所有商品都統一先走 Cloudflare Worker proxy：
+
+- 台股 / ETF：`/api/twse-stock-day`
+- 台灣加權指數：`/api/taiex-chart`
+
+目前 repo 已加入：
+
+- [wrangler.toml](D:\USB_Data\個人研究\實用分析分類\ChatGPT_個人累積\ChatGPT_Codex_專案資料夾\4檔ETF跌幅監控\wrangler.toml)
+- [cloudflare-worker.js](D:\USB_Data\個人研究\實用分析分類\ChatGPT_個人累積\ChatGPT_Codex_專案資料夾\4檔ETF跌幅監控\cloudflare-worker.js)
+- [deploy-worker.yml](D:\USB_Data\個人研究\實用分析分類\ChatGPT_個人累積\ChatGPT_Codex_專案資料夾\4檔ETF跌幅監控\.github\workflows\deploy-worker.yml)
+
+要完成自動部署，只要在 GitHub repo 設這兩個 Actions secrets：
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+設定完後，`push` 到 `main` 就會自動重新部署 Worker。
+
+如果你要先手動部署一次：
+
+```powershell
+npm install -g wrangler
+wrangler login
+wrangler deploy
+```
+
+部署成功後，確認這兩個 URL 都有正常回 JSON：
+
+```text
+https://stock-k-chat-proxy.fricachai.workers.dev/api/twse-stock-day?date=20260401&stockNo=006208
+https://stock-k-chat-proxy.fricachai.workers.dev/api/taiex-chart?interval=1d&period1=1577808000&period2=1776902400
+```
+
+只要這兩個端點正常，右側清單內目前這批商品就會一致優先走最新官方/代理資料，不會只有 `TPE: IX0001` 特例化。
+
 這是一個可直接部署到 GitHub Pages 的靜態股票觀察面板。
 
 本地使用時，不要直接雙擊 `index.html`，請先在專案目錄啟動靜態伺服器：

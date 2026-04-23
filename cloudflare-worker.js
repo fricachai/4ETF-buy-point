@@ -9,53 +9,106 @@ export default {
       });
     }
 
-    if (url.pathname !== "/api/twse-stock-day") {
-      return new Response("Not Found", { status: 404 });
+    if (url.pathname === "/api/twse-stock-day") {
+      return handleTwseStockDay(url);
     }
 
-    const date = url.searchParams.get("date");
-    const stockNo = url.searchParams.get("stockNo");
-
-    if (!date || !stockNo) {
-      return json({ stat: "ERROR", message: "Missing date or stockNo" }, 400);
+    if (url.pathname === "/api/taiex-chart") {
+      return handleTaiexChart(url);
     }
 
-    const upstream = new URL("https://www.twse.com.tw/exchangeReport/STOCK_DAY");
-    upstream.searchParams.set("response", "json");
-    upstream.searchParams.set("date", date);
-    upstream.searchParams.set("stockNo", stockNo);
-
-    try {
-      const response = await fetch(upstream.toString(), {
-        headers: {
-          accept: "application/json,text/plain,*/*",
-          "user-agent": "Mozilla/5.0",
-          referer: "https://www.twse.com.tw/",
-          origin: "https://www.twse.com.tw",
-        },
-        cf: {
-          cacheTtl: 300,
-          cacheEverything: false,
-        },
-      });
-
-      const text = await response.text();
-
-      return new Response(text, {
-        status: response.status,
-        headers: corsJsonHeaders(),
-      });
-    } catch (error) {
-      return json(
-        {
-          stat: "ERROR",
-          message: error instanceof Error ? error.message : "Proxy fetch failed",
-        },
-        502,
-      );
-    }
+    return new Response("Not Found", { status: 404 });
   },
 };
+
+async function handleTwseStockDay(url) {
+  const date = url.searchParams.get("date");
+  const stockNo = url.searchParams.get("stockNo");
+
+  if (!date || !stockNo) {
+    return json({ stat: "ERROR", message: "Missing date or stockNo" }, 400);
+  }
+
+  const upstream = new URL("https://www.twse.com.tw/exchangeReport/STOCK_DAY");
+  upstream.searchParams.set("response", "json");
+  upstream.searchParams.set("date", date);
+  upstream.searchParams.set("stockNo", stockNo);
+
+  return proxyJson(upstream, {
+    accept: "application/json,text/plain,*/*",
+    "user-agent": "Mozilla/5.0",
+    referer: "https://www.twse.com.tw/",
+    origin: "https://www.twse.com.tw",
+  });
+}
+
+async function handleTaiexChart(url) {
+  const period1 = url.searchParams.get("period1");
+  const period2 = url.searchParams.get("period2");
+  const interval = url.searchParams.get("interval") || "1d";
+
+  if (!period1 || !period2) {
+    return json({ chart: { error: { message: "Missing period1 or period2" }, result: null } }, 400);
+  }
+
+  const headers = {
+    accept: "application/json,text/plain,*/*",
+    "user-agent": "Mozilla/5.0",
+    referer: "https://finance.yahoo.com/",
+    origin: "https://finance.yahoo.com",
+  };
+  const upstreams = [
+    "https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII",
+    "https://query2.finance.yahoo.com/v8/finance/chart/%5ETWII",
+  ];
+
+  let lastErrorResponse = null;
+  for (const baseUrl of upstreams) {
+    const upstream = new URL(baseUrl);
+    upstream.searchParams.set("interval", interval);
+    upstream.searchParams.set("period1", period1);
+    upstream.searchParams.set("period2", period2);
+    const response = await proxyJson(upstream, headers);
+    if (response.ok) return response;
+    lastErrorResponse = response;
+  }
+
+  return lastErrorResponse ?? json({ stat: "ERROR", message: "Proxy fetch failed" }, 502);
+}
+
+async function proxyJson(upstream, headers) {
+  try {
+    const response = await fetch(upstream.toString(), {
+      headers,
+      cf: {
+        cacheTtl: 300,
+        cacheEverything: false,
+      },
+    });
+
+    const text = await response.text();
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return json({ stat: "ERROR", message: "Empty upstream response" }, 502);
+    }
+    if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")) {
+      return json({ stat: "ERROR", message: "Upstream returned HTML instead of JSON" }, 502);
+    }
+
+    return new Response(trimmed, {
+      status: response.status,
+      headers: corsJsonHeaders(),
+    });
+  } catch (error) {
+    return json(
+      {
+        stat: "ERROR",
+        message: error instanceof Error ? error.message : "Proxy fetch failed",
+      },
+      502,
+    );
+  }
+}
 
 function corsJsonHeaders() {
   return {

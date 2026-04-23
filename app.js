@@ -1525,6 +1525,53 @@ function parseNumber(value) {
   return Number(cleaned);
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function readJsonResponse(response, sourceLabel) {
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`${sourceLabel} HTTP ${response.status}`);
+  }
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error(`${sourceLabel} returned empty response`);
+  }
+  if (trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")) {
+    throw new Error(`${sourceLabel} returned HTML instead of JSON`);
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch (error) {
+    if (contentType.includes("json")) throw error;
+    throw new Error(`${sourceLabel} returned non-JSON content`);
+  }
+}
+
+async function fetchJsonFromCandidates(candidates, requestOptions = {}) {
+  let lastError = null;
+  for (let index = 0; index < candidates.length; index += 1) {
+    const candidate = candidates[index];
+    const attempts = Math.max(1, Number(candidate.attempts) || 1);
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      try {
+        const response = await fetch(candidate.url, requestOptions);
+        return await readJsonResponse(response, candidate.label);
+      } catch (error) {
+        lastError = error;
+        const hasNextAttempt = attempt + 1 < attempts;
+        const hasNextCandidate = index + 1 < candidates.length;
+        if (hasNextAttempt || hasNextCandidate) {
+          await sleep(350 * (attempt + 1));
+        }
+      }
+    }
+  }
+  throw lastError ?? new Error("Fetch failed");
+}
+
 function extractNameFromTitle(title, code) {
   if (!title) return code;
   const cleaned = title.replace(/\s+/g, " ").trim();
@@ -1535,27 +1582,20 @@ function extractNameFromTitle(title, code) {
 async function fetchTwseMonth(code, dateKey) {
   const directUrl =
     `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${dateKey}&stockNo=${encodeURIComponent(code)}`;
-  const url = TWSE_PROXY_BASE
-    ? `${TWSE_PROXY_BASE}/api/twse-stock-day?date=${dateKey}&stockNo=${encodeURIComponent(code)}`
-    : directUrl;
-  let lastError = null;
-  let payload = null;
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      payload = await response.json();
-      break;
-    } catch (error) {
-      lastError = error;
-      if (attempt === 0) {
-        await new Promise((resolve) => window.setTimeout(resolve, 350));
-      }
-    }
+  const candidates = [];
+  if (TWSE_PROXY_BASE) {
+    candidates.push({
+      label: "TWSE proxy",
+      url: `${TWSE_PROXY_BASE}/api/twse-stock-day?date=${dateKey}&stockNo=${encodeURIComponent(code)}`,
+      attempts: 2,
+    });
   }
-
-  if (!payload) throw lastError ?? new Error("Fetch failed");
+  candidates.push({
+    label: "TWSE official",
+    url: directUrl,
+    attempts: 1,
+  });
+  const payload = await fetchJsonFromCandidates(candidates, { cache: "no-store" });
   if (payload.stat !== "OK") return { title: payload.title || "", rows: [] };
   const rows = (payload.data || [])
     .map((row) => ({
@@ -1615,30 +1655,26 @@ async function fetchCachedTaiexData() {
 async function fetchLiveTaiexData() {
   const period1 = Math.floor(new Date(DATA_START_YEAR, DATA_START_MONTH - 1, 1).getTime() / 1000);
   const period2 = Math.floor(Date.now() / 1000) + 86400;
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&period1=${period1}&period2=${period2}`;
-  let payload = null;
-  let lastError = null;
-
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const response = await fetch(url, {
-        cache: "no-store",
-        headers: {
-          Accept: "application/json,text/plain,*/*",
-        },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      payload = await response.json();
-      break;
-    } catch (error) {
-      lastError = error;
-      if (attempt === 0) {
-        await new Promise((resolve) => window.setTimeout(resolve, 350));
-      }
-    }
+  const directUrl = `https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&period1=${period1}&period2=${period2}`;
+  const backupYahooUrl = `https://query2.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&period1=${period1}&period2=${period2}`;
+  const candidates = [];
+  if (TWSE_PROXY_BASE) {
+    candidates.push({
+      label: "market proxy",
+      url: `${TWSE_PROXY_BASE}/api/taiex-chart?interval=1d&period1=${period1}&period2=${period2}`,
+      attempts: 2,
+    });
   }
-
-  if (!payload) throw lastError ?? new Error("Fetch failed");
+  candidates.push(
+    { label: "Yahoo Finance query1", url: directUrl, attempts: 1 },
+    { label: "Yahoo Finance query2", url: backupYahooUrl, attempts: 1 },
+  );
+  const payload = await fetchJsonFromCandidates(candidates, {
+    cache: "no-store",
+    headers: {
+      Accept: "application/json,text/plain,*/*",
+    },
+  });
   const result = payload?.chart?.result?.[0];
   const quote = result?.indicators?.quote?.[0];
   const timestamps = result?.timestamp || [];
