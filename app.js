@@ -45,6 +45,7 @@ const DEFAULT_STOCKS = [
   { code: "0056", name: "元大高股息" },
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
+  { code: "2330", name: "台積電" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
 
@@ -67,6 +68,7 @@ const ACTIVE_DEFAULT_STOCKS = [
   { code: "0056", name: "元大高股息" },
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
+  { code: "2330", name: "台積電" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
 
@@ -102,7 +104,7 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
-const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v2";
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v3";
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
