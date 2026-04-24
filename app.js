@@ -115,11 +115,17 @@ function setStatus(message, type = "") {
   statusText.className = `status-text${type ? ` ${type}` : ""}`;
 }
 
-function scheduleRender() {
+function renderChartOnly() {
+  const stock = state.stocks.find((entry) => entry.code === state.selectedCode) || state.stocks[0];
+  if (!stock) return;
+  renderChart(stock);
+}
+
+function scheduleChartRender() {
   if (renderFrameRequestId) return;
   renderFrameRequestId = window.requestAnimationFrame(() => {
     renderFrameRequestId = 0;
-    renderAll();
+    renderChartOnly();
   });
 }
 
@@ -2334,7 +2340,7 @@ canvas.addEventListener("wheel", (event) => {
   const zoomIn = event.deltaY < 0;
   if (zone === "xAxis") state.chartView.visibleCount = clamp(state.chartView.visibleCount + (zoomIn ? -8 : 8), 20, 220);
   if (zone === "priceScale") state.chartView.priceScale = clamp(state.chartView.priceScale + (zoomIn ? -0.1 : 0.1), 0.5, 3);
-  scheduleRender();
+  scheduleChartRender();
 }, { passive: false });
 
 canvas.addEventListener("pointermove", (event) => {
@@ -2362,7 +2368,7 @@ canvas.addEventListener("pointermove", (event) => {
     state.chartView.panX = clamp(nextPanX, -step * 0.95, step * 0.95);
     state.chartView.panY = clamp(state.dragState.startPanY + dy, -state.dragState.priceAreaHeight * 2.2, state.dragState.priceAreaHeight * 2.2);
     canvas.style.cursor = "grabbing";
-    scheduleRender();
+    scheduleChartRender();
     return;
   }
   const zone = detectChartZone(point);
@@ -2377,7 +2383,7 @@ canvas.addEventListener("pointermove", (event) => {
         : ["priceArea", "volumeArea", "cciArea", "macdArea", "kdjArea"].includes(zone)
           ? "crosshair"
           : "default";
-  scheduleRender();
+  scheduleChartRender();
 });
 
 canvas.addEventListener("pointerleave", () => {
@@ -2387,7 +2393,7 @@ canvas.addEventListener("pointerleave", () => {
     state.chartView.hoverY = null;
     state.chartView.hoverIndex = null;
     canvas.style.cursor = "default";
-    scheduleRender();
+    scheduleChartRender();
   }
 });
 
@@ -2398,7 +2404,7 @@ canvas.addEventListener("pointerdown", (event) => {
   if (zone === "signalToggle") {
     event.preventDefault();
     state.showSignalTags = !state.showSignalTags;
-    scheduleRender();
+    scheduleChartRender();
     return;
   }
   if (zone !== "priceArea" || !state.chartLayout) return;
@@ -2470,7 +2476,7 @@ priceFileInput.addEventListener("change", (event) => {
   event.target.value = "";
 });
 
-window.addEventListener("resize", () => scheduleRender());
+window.addEventListener("resize", () => scheduleChartRender());
 
 async function bootstrap() {
   initAuthorCardEffects();
