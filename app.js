@@ -36,6 +36,7 @@ const BUY_REMINDER_RULES = {
   "0056": { min: 6, max: 8, addOn: 8 },
   "00878": { min: 4.5, max: 5.5, addOn: 5 },
   "006208": { min: 5, max: 7, addOn: 7 },
+  "2330": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
   "TPE: IX0001": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
 };
 
@@ -151,6 +152,7 @@ function migratePersistedWatchlist(persistedWatchlist) {
       return persistedWatchlist;
     }
     const additions = [
+      { code: "2330", name: ACTIVE_KNOWN_STOCK_NAMES["2330"] || "2330" },
       { code: "TPE: IX0001", name: ACTIVE_KNOWN_STOCK_NAMES["TPE: IX0001"] || "TPE: IX0001" },
     ];
     const target = persistedWatchlist
@@ -992,19 +994,44 @@ function renderChart(stock) {
     state.chartView.hoverZone === "priceScale" ? "rgba(41,105,255,0.08)" : "rgba(255,255,255,0.03)",
     state.chartView.hoverZone === "priceScale" ? "rgba(41,105,255,0.45)" : null,
   );
+  ctx.save();
+  const signalToggleGradient = ctx.createLinearGradient(
+    signalToggleArea.x,
+    signalToggleArea.y,
+    signalToggleArea.x + signalToggleArea.w,
+    signalToggleArea.y + signalToggleArea.h,
+  );
+  if (state.showSignalTags) {
+    signalToggleGradient.addColorStop(0, state.chartView.hoverZone === "signalToggle" ? "#fff07a" : "#ffd84a");
+    signalToggleGradient.addColorStop(0.55, state.chartView.hoverZone === "signalToggle" ? "#ffb11f" : "#ff9800");
+    signalToggleGradient.addColorStop(1, state.chartView.hoverZone === "signalToggle" ? "#ff7a18" : "#ff6a00");
+  } else {
+    signalToggleGradient.addColorStop(0, state.chartView.hoverZone === "signalToggle" ? "#8ce3ff" : "#62d0ff");
+    signalToggleGradient.addColorStop(0.55, state.chartView.hoverZone === "signalToggle" ? "#3d8bff" : "#2c6dff");
+    signalToggleGradient.addColorStop(1, state.chartView.hoverZone === "signalToggle" ? "#5d5bff" : "#4a47ff");
+  }
+  ctx.shadowBlur = state.chartView.hoverZone === "signalToggle" ? 18 : 12;
+  ctx.shadowColor = state.showSignalTags ? "rgba(255, 164, 0, 0.55)" : "rgba(58, 131, 255, 0.50)";
   drawRoundRect(
     signalToggleArea.x,
     signalToggleArea.y,
     signalToggleArea.w,
     signalToggleArea.h,
     8,
-    state.chartView.hoverZone === "signalToggle"
-      ? (state.showSignalTags ? "#ffd84d" : "#5ac8ff")
-      : state.showSignalTags
-        ? "#ffb300"
-        : "#215dff",
-    state.showSignalTags ? "#fff1a6" : "#9fdfff",
+    signalToggleGradient,
+    state.showSignalTags ? "#fff4b8" : "#c6edff",
   );
+  ctx.shadowBlur = 0;
+  drawRoundRect(
+    signalToggleArea.x + 1.5,
+    signalToggleArea.y + 1.5,
+    signalToggleArea.w - 3,
+    signalToggleArea.h - 3,
+    7,
+    null,
+    "rgba(255,255,255,0.28)",
+  );
+  ctx.restore();
   drawText(
     state.showSignalTags ? "標籤 開" : "標籤 關",
     signalToggleArea.x + signalToggleArea.w / 2,
@@ -2453,7 +2480,10 @@ async function bootstrap() {
 
 async function bootstrapDefaultEtfs() {
   const persistedWatchlist = migratePersistedWatchlist(loadPersistedWatchlist());
-  const initialStocks = persistedWatchlist?.stocks?.length ? persistedWatchlist.stocks : ACTIVE_DEFAULT_STOCKS;
+  const initialStocks = persistedWatchlist?.stocks?.length ? [...persistedWatchlist.stocks] : [...ACTIVE_DEFAULT_STOCKS];
+  if (!initialStocks.some((stock) => canonicalizeCode(stock.code) === "2330")) {
+    initialStocks.splice(Math.min(4, initialStocks.length), 0, { code: "2330", name: ACTIVE_KNOWN_STOCK_NAMES["2330"] || "2330" });
+  }
   state.stocks = [];
   state.rawCandlesByCode.clear();
   state.realtimeQuotesByCode.clear();
