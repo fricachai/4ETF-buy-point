@@ -108,10 +108,19 @@ const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v3";
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
+let renderFrameRequestId = 0;
 
 function setStatus(message, type = "") {
   statusText.textContent = message;
   statusText.className = `status-text${type ? ` ${type}` : ""}`;
+}
+
+function scheduleRender() {
+  if (renderFrameRequestId) return;
+  renderFrameRequestId = window.requestAnimationFrame(() => {
+    renderFrameRequestId = 0;
+    renderAll();
+  });
 }
 
 function persistWatchlist() {
@@ -2325,7 +2334,7 @@ canvas.addEventListener("wheel", (event) => {
   const zoomIn = event.deltaY < 0;
   if (zone === "xAxis") state.chartView.visibleCount = clamp(state.chartView.visibleCount + (zoomIn ? -8 : 8), 20, 220);
   if (zone === "priceScale") state.chartView.priceScale = clamp(state.chartView.priceScale + (zoomIn ? -0.1 : 0.1), 0.5, 3);
-  renderAll();
+  scheduleRender();
 }, { passive: false });
 
 canvas.addEventListener("pointermove", (event) => {
@@ -2353,7 +2362,7 @@ canvas.addEventListener("pointermove", (event) => {
     state.chartView.panX = clamp(nextPanX, -step * 0.95, step * 0.95);
     state.chartView.panY = clamp(state.dragState.startPanY + dy, -state.dragState.priceAreaHeight * 2.2, state.dragState.priceAreaHeight * 2.2);
     canvas.style.cursor = "grabbing";
-    renderAll();
+    scheduleRender();
     return;
   }
   const zone = detectChartZone(point);
@@ -2368,7 +2377,7 @@ canvas.addEventListener("pointermove", (event) => {
         : ["priceArea", "volumeArea", "cciArea", "macdArea", "kdjArea"].includes(zone)
           ? "crosshair"
           : "default";
-  renderAll();
+  scheduleRender();
 });
 
 canvas.addEventListener("pointerleave", () => {
@@ -2378,7 +2387,7 @@ canvas.addEventListener("pointerleave", () => {
     state.chartView.hoverY = null;
     state.chartView.hoverIndex = null;
     canvas.style.cursor = "default";
-    renderAll();
+    scheduleRender();
   }
 });
 
@@ -2389,7 +2398,7 @@ canvas.addEventListener("pointerdown", (event) => {
   if (zone === "signalToggle") {
     event.preventDefault();
     state.showSignalTags = !state.showSignalTags;
-    renderAll();
+    scheduleRender();
     return;
   }
   if (zone !== "priceArea" || !state.chartLayout) return;
@@ -2427,7 +2436,7 @@ canvas.addEventListener("pointercancel", clearDragState);
 timeframeSelect.addEventListener("change", () => {
   state.timeframe = timeframeSelect.value;
   resetChartView();
-  renderAll();
+  scheduleRender();
 });
 
 stockForm.addEventListener("submit", async (event) => {
@@ -2461,7 +2470,7 @@ priceFileInput.addEventListener("change", (event) => {
   event.target.value = "";
 });
 
-window.addEventListener("resize", () => renderAll());
+window.addEventListener("resize", () => scheduleRender());
 
 async function bootstrap() {
   initAuthorCardEffects();
