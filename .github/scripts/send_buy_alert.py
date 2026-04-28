@@ -45,6 +45,22 @@ TRACKED_INSTRUMENTS = {
         "max_drop": 7.0,
         "add_on_drop": 7.0,
     },
+    "2330": {
+        "name": "TSMC",
+        "path": Path("data/2330.json"),
+        "mode": "kd-k",
+        "range_min": 20.0,
+        "range_max": 30.0,
+        "oversold_max": 20.0,
+    },
+    "00830": {
+        "name": "Cathay PHLX Semiconductor ETF",
+        "path": Path("data/00830.json"),
+        "mode": "kd-k",
+        "range_min": 20.0,
+        "range_max": 30.0,
+        "oversold_max": 20.0,
+    },
     "TPE: IX0001": {
         "name": "Taiwan Weighted Index",
         "path": Path("data/taiex.json"),

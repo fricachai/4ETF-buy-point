@@ -5,41 +5,44 @@ import time
 from datetime import datetime, timezone
 from json import JSONDecodeError
 from pathlib import Path
-from urllib.request import Request, urlopen
+
+import requests
 
 
 DATA_START = datetime(2020, 1, 1, tzinfo=timezone.utc)
 TAIEX_SOURCE_URL = "https://query1.finance.yahoo.com/v8/finance/chart/%5ETWII?interval=1d&period1={period1}&period2={period2}"
 TAIEX_OUTPUT_PATH = Path("data/taiex.json")
-TWSE_STOCK_DAY_URL = "https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date={date_key}&stockNo={stock_code}"
+TWSE_STOCK_DAY_URL = "https://www.twse.com.tw/rwd/zh/afterTrading/STOCK_DAY?response=json&date={date_key}&stockNo={stock_code}"
 STOCK_OUTPUT_PATHS = {
     "0050": Path("data/0050.json"),
     "0056": Path("data/0056.json"),
     "00878": Path("data/00878.json"),
     "006208": Path("data/006208.json"),
     "2330": Path("data/2330.json"),
+    "00830": Path("data/00830.json"),
 }
 
 
 def fetch_json(url: str) -> dict:
     last_error: Exception | None = None
     for attempt in range(4):
-        request = Request(
-            url,
-            headers={
-                "User-Agent": "Mozilla/5.0",
-                "Accept": "application/json,text/plain,*/*",
-                "Referer": "https://www.twse.com.tw/",
-                "Cache-Control": "no-cache",
-            },
-        )
         try:
-            with urlopen(request, timeout=30) as response:
-                payload = response.read().decode("utf-8-sig").strip()
-                if not payload:
-                    raise ValueError("Empty response body")
-                return json.loads(payload)
-        except (JSONDecodeError, ValueError) as error:
+            response = requests.get(
+                url,
+                timeout=30,
+                allow_redirects=True,
+                headers={
+                    "User-Agent": "Mozilla/5.0",
+                    "Accept": "application/json,text/plain,*/*",
+                    "Referer": "https://www.twse.com.tw/",
+                    "Cache-Control": "no-cache",
+                },
+            )
+            payload = response.text.strip()
+            if not payload:
+                raise ValueError("Empty response body")
+            return json.loads(payload)
+        except (requests.RequestException, JSONDecodeError, ValueError) as error:
             last_error = error
             time.sleep(1.2 * (attempt + 1))
     raise RuntimeError(f"Failed to decode JSON from {url}") from last_error
@@ -50,6 +53,7 @@ def fetch_taiex() -> list[dict]:
     period2 = int(datetime.now(timezone.utc).timestamp())
     payload = fetch_json(TAIEX_SOURCE_URL.format(period1=period1, period2=period2))
     result = payload["chart"]["result"][0]
+    meta = result.get("meta", {})
     quote = result["indicators"]["quote"][0]
     timestamps = result["timestamp"]
     candles = []
@@ -59,6 +63,8 @@ def fetch_taiex() -> list[dict]:
         high_price = quote["high"][index]
         low_price = quote["low"][index]
         close_price = quote["close"][index]
+        if close_price is None and index == len(timestamps) - 1:
+            close_price = meta.get("regularMarketPrice")
         volume = quote["volume"][index] or 0
         if None in (open_price, high_price, low_price, close_price):
             continue

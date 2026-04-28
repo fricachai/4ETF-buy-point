@@ -37,6 +37,7 @@ const BUY_REMINDER_RULES = {
   "00878": { min: 4.5, max: 5.5, addOn: 5 },
   "006208": { min: 5, max: 7, addOn: 7 },
   "2330": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
+  "00830": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
   "TPE: IX0001": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
 };
 
@@ -46,6 +47,7 @@ const DEFAULT_STOCKS = [
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
   { code: "2330", name: "台積電" },
+  { code: "00830", name: "國泰費城半導體" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
 
@@ -61,6 +63,7 @@ const KNOWN_STOCK_NAMES = {
   "00878": "國泰永續高股息",
   "006208": "富邦台50",
   "2330": "台積電",
+  "00830": "國泰費城半導體",
 };
 
 const ACTIVE_DEFAULT_STOCKS = [
@@ -69,6 +72,7 @@ const ACTIVE_DEFAULT_STOCKS = [
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
   { code: "2330", name: "台積電" },
+  { code: "00830", name: "國泰費城半導體" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
 
@@ -79,6 +83,7 @@ const ACTIVE_KNOWN_STOCK_NAMES = {
   "006208": "富邦台50",
   "TPE: IX0001": "台灣加權指數",
   "2330": "台積電",
+  "00830": "國泰費城半導體",
 };
 
 const timeframeHours = { "1h": 1, "2h": 2, "3h": 3, "4h": 4, "1d": 24 };
@@ -104,7 +109,7 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
-const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v3";
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v4";
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
@@ -170,6 +175,7 @@ function migratePersistedWatchlist(persistedWatchlist) {
     }
     const additions = [
       { code: "2330", name: ACTIVE_KNOWN_STOCK_NAMES["2330"] || "2330" },
+      { code: "00830", name: ACTIVE_KNOWN_STOCK_NAMES["00830"] || "00830" },
       { code: "TPE: IX0001", name: ACTIVE_KNOWN_STOCK_NAMES["TPE: IX0001"] || "TPE: IX0001" },
     ];
     const target = persistedWatchlist
@@ -1498,10 +1504,15 @@ function renderWatchlist() {
     .forEach((stock) => {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const quote = state.realtimeQuotesByCode.get(stock.code);
+      const fallbackLastClose = getDisplayCandles(stock.code).candles.at(-1)?.close;
       const reminderBadge = reminder?.inRange
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
-      const quoteText = quote?.price != null ? formatNumber(quote.price, 2) : "--";
+      const quoteText = quote?.price != null
+        ? formatNumber(quote.price, 2)
+        : Number.isFinite(fallbackLastClose)
+          ? formatNumber(fallbackLastClose, 2)
+          : "--";
       const quoteClass = quote?.changeValue > 0 ? "up" : quote?.changeValue < 0 ? "down" : "";
       const item = document.createElement("button");
       item.type = "button";
@@ -1846,8 +1857,8 @@ function getRealtimeChannel(code) {
 }
 
 function parseRealtimeCode(row) {
-  const channel = String(row?.ex_ch || row?.ch || "").toLowerCase();
-  if (channel.includes("tse_t00.tw")) return "TPE: IX0001";
+  const channel = String(row?.ex_ch || row?.ch || row?.["@"] || "").toLowerCase();
+  if (channel.includes("tse_t00.tw") || channel === "t00.tw" || channel.includes("|t00|")) return "TPE: IX0001";
   return canonicalizeCode(String(row?.c || "").trim());
 }
 
@@ -1873,7 +1884,7 @@ function normalizeRealtimeQuote(row, fallbackName = "") {
     : null;
   return {
     code,
-    name: String(row?.n || fallbackName || code).trim(),
+    name: isMarketIndexCode(code) ? String(fallbackName || code).trim() : String(row?.n || fallbackName || code).trim(),
     price,
     previousClose,
     open: parseNumber(row?.o),
@@ -2053,19 +2064,29 @@ async function fetchLiveTaiexData() {
     },
   });
   const result = payload?.chart?.result?.[0];
+  const meta = result?.meta || {};
   const quote = result?.indicators?.quote?.[0];
   const timestamps = result?.timestamp || [];
   if (!quote || !timestamps.length) throw new Error("No official daily data");
 
   const candles = timestamps
-    .map((timestamp, index) => ({
-      date: new Date(timestamp * 1000).toISOString(),
-      open: parseNumber(quote.open?.[index]),
-      high: parseNumber(quote.high?.[index]),
-      low: parseNumber(quote.low?.[index]),
-      close: parseNumber(quote.close?.[index]),
-      volume: parseNumber(quote.volume?.[index]) ?? 0,
-    }))
+    .map((timestamp, index) => {
+      const open = parseNumber(quote.open?.[index]);
+      const high = parseNumber(quote.high?.[index]);
+      const low = parseNumber(quote.low?.[index]);
+      let close = parseNumber(quote.close?.[index]);
+      if (!Number.isFinite(close) && index === timestamps.length - 1) {
+        close = parseNumber(meta.regularMarketPrice);
+      }
+      return {
+        date: new Date(timestamp * 1000).toISOString(),
+        open,
+        high,
+        low,
+        close,
+        volume: parseNumber(quote.volume?.[index]) ?? 0,
+      };
+    })
     .filter((row) => row.date && [row.open, row.high, row.low, row.close].every(Number.isFinite))
     .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -2243,6 +2264,7 @@ function loadDemoData() {
   timeframeSelect.value = "1d";
   ACTIVE_DEFAULT_STOCKS.forEach(upsertStock);
   generateDemoCandles("0050", "元大台灣50", 50, 180);
+  generateDemoCandles("00830", "國泰費城半導體", 830, 42);
   generateDemoCandles("2330", "台積電", 2330, 920);
   generateDemoCandles("TPE: IX0001", "台灣加權指數", 1001, 180);
   state.selectedCode = "0050";
@@ -2261,6 +2283,7 @@ function loadDefaultEtfDemoData() {
   generateDemoCandles("0056", "元大高股息", 56, 36);
   generateDemoCandles("00878", "國泰永續高股息", 878, 21);
   generateDemoCandles("006208", "富邦台50", 6208, 108);
+  generateDemoCandles("00830", "國泰費城半導體", 830, 42);
   generateDemoCandles("TPE: IX0001", "台灣加權指數", 1001, 180);
   state.selectedCode = "0050";
   renderAll();
