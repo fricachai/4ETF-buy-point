@@ -585,8 +585,8 @@ input::placeholder {
   display: grid;
   grid-template-columns: 102px minmax(0, 1fr) 78px 24px;
   gap: 6px;
-  min-height: 56px;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 5px 12px;
   border-bottom: 1px solid var(--line-soft);
   cursor: grab;
   user-select: none;
@@ -621,7 +621,7 @@ input::placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
+  min-height: 20px;
   font-weight: 700;
   color: #ffe27a;
   line-height: 1.2;
@@ -651,7 +651,7 @@ input::placeholder {
   justify-content: flex-start;
   gap: 6px;
   min-width: 0;
-  min-height: 24px;
+  min-height: 20px;
   overflow: hidden;
 }
 
@@ -661,7 +661,7 @@ input::placeholder {
   align-items: center;
   justify-self: center;
   justify-content: center;
-  min-height: 24px;
+  min-height: 20px;
   min-width: 100%;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
@@ -694,8 +694,8 @@ input::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   align-self: center;
   justify-self: center;
   border-radius: 8px;
