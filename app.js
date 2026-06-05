@@ -10,7 +10,6 @@ const nameInput = document.getElementById("nameInput");
 const searchInput = document.getElementById("searchInput");
 const statusText = document.getElementById("statusText");
 const watchlistFileInput = document.getElementById("watchlistFileInput");
-const timeframeSelect = document.getElementById("timeframeSelect");
 const loginGate = document.getElementById("loginGate");
 const loginForm = document.getElementById("loginForm");
 const loginUsername = document.getElementById("loginUsername");
@@ -2315,7 +2314,6 @@ function loadDemoData() {
   state.rawCandlesByCode.clear();
   state.realtimeQuotesByCode.clear();
   state.timeframe = "1d";
-  timeframeSelect.value = "1d";
   ACTIVE_DEFAULT_STOCKS.forEach(upsertStock);
   generateDemoCandles("0050", "元大台灣50", 50, 180);
   generateDemoCandles("00830", "國泰費城半導體", 830, 42);
@@ -2331,7 +2329,6 @@ function loadDefaultEtfDemoData() {
   state.rawCandlesByCode.clear();
   state.realtimeQuotesByCode.clear();
   state.timeframe = "1d";
-  timeframeSelect.value = "1d";
   ACTIVE_DEFAULT_STOCKS.forEach(upsertStock);
   generateDemoCandles("0050", "元大台灣50", 50, 180);
   generateDemoCandles("0056", "元大高股息", 56, 36);
@@ -2515,12 +2512,6 @@ const clearDragState = (event) => {
 
 canvas.addEventListener("pointerup", clearDragState);
 canvas.addEventListener("pointercancel", clearDragState);
-
-timeframeSelect.addEventListener("change", () => {
-  state.timeframe = timeframeSelect.value;
-  resetChartView();
-  scheduleRender();
-});
 
 stockForm.addEventListener("submit", async (event) => {
   event.preventDefault();

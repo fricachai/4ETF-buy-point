@@ -198,8 +198,19 @@ body.auth-locked {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.chart-header {
+  align-items: center;
+}
+
+.chart-header-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 h1,
@@ -214,11 +225,13 @@ p {
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
+  row-gap: 10px;
 }
 
 h1 {
   font-size: 30px;
   font-weight: 700;
+  line-height: 1.15;
 }
 
 .author-card {
@@ -376,10 +389,10 @@ h1 {
 
 
 .close-info {
-  margin-top: 8px;
   color: #d7dee9;
   font-size: 16px;
   font-weight: 600;
+  line-height: 1.45;
 }
 
 h2 {
@@ -394,7 +407,9 @@ h3 {
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
 }
 
 .ghost-button,
@@ -768,7 +783,13 @@ input::placeholder {
     grid-template-columns: 1fr;
   }
 
+  .chart-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .header-actions {
-    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
   }
 }
