@@ -1,4 +1,4 @@
-# Agent Handoff
+﻿# Agent Handoff
 
 This file is the handoff note for future agents working on this repo.
 
@@ -99,6 +99,16 @@ Important functions in `app.js`:
 - `normalizeRealtimeQuote()`
 - `mergeRealtimeQuoteIntoCandles()`
 - `getDisplayCandles()`
+
+Important pricing rule:
+- do not fall back from realtime price to `row.y`
+- `row.y` is previous close, not current market price
+- current display priority should be:
+  1. `row.z` real trade price
+  2. `row.pz` indicative / match price
+  3. top-of-book derived price from `row.a` / `row.b`
+
+If a user reports “price is stale but there is a number on screen”, check whether the UI is accidentally showing previous close instead of realtime trade / match / order-book price.
 
 ## Chart Performance Notes
 
@@ -210,3 +220,23 @@ For changes that affect production behavior:
 - push to `main`
 - verify GitHub Pages / Worker deployment
 - remind user to hard refresh if the issue is frontend-visible
+
+## Default Project Behaviour
+
+When working in this repository, always notice repeated, time-consuming, error-prone, or reusable workflows.
+
+Before major changes, check existing files, scripts, docs, prompts, and workflows first.
+
+Prefer editing or extending existing files before creating new ones.
+
+When useful, suggest the smallest practical reusable improvement:
+- AGENTS.md rule
+- Script
+- Template
+- Automation
+
+Only suggest reusable improvements when the workflow is likely to recur, has clear input/output, and improves speed, quality, consistency, or reliability.
+
+Avoid speculative or overly broad abstractions.
+
+Mark uncertain items as `資料不足，無法確認`.

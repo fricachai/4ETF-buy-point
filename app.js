@@ -31,6 +31,7 @@ const DATA_START_YEAR = 2020;
 const DATA_START_MONTH = 1;
 const BUY_REMINDER_LOOKBACK = 10;
 const REALTIME_REFRESH_MS = 20000;
+const DEFAULT_DRAWDOWN_RULE = { min: 4, max: 6, addOn: 6 };
 const BUY_REMINDER_RULES = {
   "0050": { min: 5, max: 7, addOn: 7 },
   "0056": { min: 6, max: 8, addOn: 8 },
@@ -499,7 +500,7 @@ function getRecentSeriesMin(series, endIndex, lookback, fallback = null) {
 }
 
 function getBuyReminderRule(code) {
-  return BUY_REMINDER_RULES[code] || { min: 4, max: 6 };
+  return BUY_REMINDER_RULES[code] || DEFAULT_DRAWDOWN_RULE;
 }
 
 function formatRulePercent(value) {
@@ -521,8 +522,9 @@ function formatBuyReminderDescription(code) {
   if (rule.mode === "kd-k") {
     return `買點：K指標 ${formatRulePercent(rule.rangeMin)}~${formatRulePercent(rule.rangeMax)} 或 K<${formatRulePercent(rule.oversoldMax)}`;
   }
+  const addOn = Number.isFinite(rule.addOn) ? rule.addOn : rule.max;
   const rangeText = rule.min === rule.max ? `-${rule.min}%` : `-${rule.min}% ~ -${rule.max}%`;
-  return `買點：10個交易日收盤價跌幅 ${rangeText} ( -${rule.addOn}% 時加碼 報酬率最高)`;
+  return `買點：10個交易日收盤價跌幅 ${rangeText} ( -${addOn}% 時加碼 報酬率最高)`;
 }
 
 function formatLatestReminderSummary(code, latestSignal) {
@@ -1692,10 +1694,11 @@ function renderAll() {
   const displayChangeValue = realtimeQuote?.changeValue ?? chartResult.changeValue;
   const displayChangePct = realtimeQuote?.changePct ?? chartResult.changePct;
   const asOfText = realtimeQuote?.asOf ? ` | 即時 ${realtimeQuote.asOf}` : "";
-  const changeText = displayPrice != null
+  const priceLabel = realtimeQuote?.priceSource ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
+  const changeText = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
     ? ` | ${formatNumber(displayChangeValue, 2)} (${formatNumber(displayChangePct, 2)}%)`
     : "";
-  closeInfo.textContent = `最新價格：${displayPrice != null ? formatNumber(displayPrice, 2) : "--"}${changeText}${asOfText}${reminderText}`;
+  closeInfo.textContent = `${priceLabel}：${displayPrice != null ? formatNumber(displayPrice, 2) : "--"}${changeText}${asOfText}${reminderText}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
     setStatus(`${stock.code} 目前只有日線資料，所以小時 K 會先用 1 日資料顯示。`, "error");
   }
@@ -1873,11 +1876,60 @@ function formatRealtimeTimestamp(dateText, timeText, millisText) {
   return `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)} ${rawTime}`;
 }
 
+function parseQuoteLevel(rawText) {
+  if (typeof rawText !== "string") return null;
+  const firstValue = rawText.split("_").map((part) => parseNumber(part)).find(Number.isFinite);
+  return Number.isFinite(firstValue) ? firstValue : null;
+}
+
+function pickRealtimeDisplayPrice(row) {
+  const tradePrice = parseNumber(row?.z);
+  if (Number.isFinite(tradePrice)) {
+    return { price: tradePrice, source: "trade" };
+  }
+
+  const indicativePrice = parseNumber(row?.pz);
+  if (Number.isFinite(indicativePrice)) {
+    return { price: indicativePrice, source: "match" };
+  }
+
+  const bestBid = parseQuoteLevel(row?.b);
+  const bestAsk = parseQuoteLevel(row?.a);
+  if (Number.isFinite(bestBid) && Number.isFinite(bestAsk)) {
+    return { price: (bestBid + bestAsk) / 2, source: "mid" };
+  }
+  if (Number.isFinite(bestBid)) {
+    return { price: bestBid, source: "bid" };
+  }
+  if (Number.isFinite(bestAsk)) {
+    return { price: bestAsk, source: "ask" };
+  }
+
+  return { price: null, source: "" };
+}
+
+function getRealtimePriceLabel(quote) {
+  switch (quote?.priceSource) {
+    case "trade":
+      return "即時成交";
+    case "match":
+      return "即時試算";
+    case "mid":
+      return "即時中間價";
+    case "bid":
+      return "即時委買";
+    case "ask":
+      return "即時委賣";
+    default:
+      return "最新價格";
+  }
+}
+
 function normalizeRealtimeQuote(row, fallbackName = "") {
   const code = parseRealtimeCode(row);
   if (!code) return null;
-  const price = firstFiniteNumber(parseNumber(row?.z), parseNumber(row?.pz), parseNumber(row?.y));
-  const previousClose = firstFiniteNumber(parseNumber(row?.y), price);
+  const { price, source } = pickRealtimeDisplayPrice(row);
+  const previousClose = parseNumber(row?.y);
   const changeValue = Number.isFinite(price) && Number.isFinite(previousClose) ? price - previousClose : null;
   const changePct = Number.isFinite(changeValue) && Number.isFinite(previousClose) && previousClose !== 0
     ? (changeValue / previousClose) * 100
@@ -1891,6 +1943,9 @@ function normalizeRealtimeQuote(row, fallbackName = "") {
     high: parseNumber(row?.h),
     low: parseNumber(row?.l),
     volume: parseNumber(row?.v) ?? 0,
+    bestBid: parseQuoteLevel(row?.b),
+    bestAsk: parseQuoteLevel(row?.a),
+    priceSource: source,
     changeValue,
     changePct,
     asOf: formatRealtimeTimestamp(row?.d, row?.t, row?.tlong),
