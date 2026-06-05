@@ -10,7 +10,6 @@ const nameInput = document.getElementById("nameInput");
 const searchInput = document.getElementById("searchInput");
 const statusText = document.getElementById("statusText");
 const watchlistFileInput = document.getElementById("watchlistFileInput");
-const priceFileInput = document.getElementById("priceFileInput");
 const timeframeSelect = document.getElementById("timeframeSelect");
 const loginGate = document.getElementById("loginGate");
 const loginForm = document.getElementById("loginForm");
@@ -971,7 +970,7 @@ function renderChart(stock) {
 
   if (!candles.length) {
     drawText("尚未載入這個商品的 K 線資料", 60, 120, "#f5f6fa", 28);
-    drawText("請點選右側商品，或匯入 `code,name,date,open,high,low,close,volume` 格式 CSV", 60, 160, "#97a0af", 18);
+    drawText("請點選右側商品並等待官方資料載入。", 60, 160, "#97a0af", 18);
     state.chartLayout = null;
     return { effectiveTimeframe, fallback, lastClose: null };
   }
@@ -2541,16 +2540,6 @@ watchlistFileInput.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
   readFile(file, (text) => loadWatchlistRows(parseCsv(text)));
-  event.target.value = "";
-});
-
-priceFileInput.addEventListener("change", (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  readFile(file, (text) => {
-    loadPriceRows(parseCsv(text));
-    setStatus("已匯入本地 K 線 CSV。", "success");
-  });
   event.target.value = "";
 });
 
