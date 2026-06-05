@@ -1853,7 +1853,7 @@ function getRealtimeChannel(code) {
   const normalized = canonicalizeCode(code);
   if (!normalized) return "";
   if (isMarketIndexCode(normalized)) return "tse_t00.tw";
-  if (/^\d+$/.test(normalized)) return `tse_${normalized}.tw`;
+  if (/^[0-9A-Z]+$/.test(normalized)) return `tse_${normalized.toLowerCase()}.tw`;
   return "";
 }
 
