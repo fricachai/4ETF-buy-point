@@ -59,7 +59,7 @@ async function handleTwseQuote(url) {
   upstream.searchParams.set("ex_ch", exCh);
   upstream.searchParams.set("_", url.searchParams.get("_") || String(Date.now()));
 
-  return proxyJson(upstream, {
+  const response = await proxyJson(upstream, {
     accept: "application/json,text/plain,*/*",
     "user-agent": "Mozilla/5.0",
     referer: "https://mis.twse.com.tw/stock/index.jsp",
