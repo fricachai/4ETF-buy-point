@@ -542,11 +542,11 @@ input::placeholder {
 
 .watchlist-header {
   display: grid;
-  grid-template-columns: 102px minmax(0, 1fr) 78px 24px;
-  gap: 6px;
+  grid-template-columns: 86px minmax(84px, 1fr) 68px 76px 22px;
+  gap: 5px;
   color: var(--muted);
   font-size: 13px;
-  padding: 10px 12px;
+  padding: 10px 8px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   align-items: center;
@@ -598,10 +598,10 @@ input::placeholder {
 
 .watch-item {
   display: grid;
-  grid-template-columns: 102px minmax(0, 1fr) 78px 24px;
-  gap: 6px;
+  grid-template-columns: 86px minmax(84px, 1fr) 68px 76px 22px;
+  gap: 5px;
   min-height: 36px;
-  padding: 3px 10px;
+  padding: 3px 8px;
   font-size: 13px;
   border-bottom: 1px solid var(--line-soft);
   cursor: grab;
@@ -671,7 +671,8 @@ input::placeholder {
   overflow: hidden;
 }
 
-.watch-quote {
+.watch-quote,
+.watch-drawdown {
   display: flex;
   align-self: center;
   align-items: center;
@@ -686,23 +687,32 @@ input::placeholder {
   text-align: center;
 }
 
-.watch-quote.up {
+.watch-drawdown {
+  color: #f3f6fb;
+}
+
+.watch-quote.up,
+.watch-drawdown.up {
   color: #ff7f8c;
 }
 
-.watch-quote.down {
+.watch-quote.down,
+.watch-drawdown.down {
   color: #4fd0a5;
 }
 
-.watch-item.active .watch-quote {
+.watch-item.active .watch-quote,
+.watch-item.active .watch-drawdown {
   color: #111317;
 }
 
-.watch-item.active .watch-quote.up {
+.watch-item.active .watch-quote.up,
+.watch-item.active .watch-drawdown.up {
   color: #c72a39;
 }
 
-.watch-item.active .watch-quote.down {
+.watch-item.active .watch-quote.down,
+.watch-item.active .watch-drawdown.down {
   color: #0d8f66;
 }
 

@@ -543,6 +543,13 @@ function formatLatestReminderBadge(code, latestSignal) {
   return `${formatNumber(latestSignal.dropPct, 2)}%`;
 }
 
+function getLatestDrawdownPct(code) {
+  const candles = getDisplayCandles(code).candles;
+  if (!candles.length) return null;
+  const latestDrawdown = calculateDrawdownWindow(candles, candles.length - 1, DEFAULT_DRAWDOWN_RULE);
+  return Number.isFinite(latestDrawdown?.dropPct) ? latestDrawdown.dropPct : null;
+}
+
 function calculateDrawdownWindow(candles, endIndex, rule, lookback = BUY_REMINDER_LOOKBACK) {
   if (!candles.length || endIndex < 0 || endIndex >= candles.length) return null;
   const startIndex = endIndex - lookback + 1;
@@ -1612,6 +1619,15 @@ function renderWatchlist() {
         : "";
       const quoteText = quote?.price != null ? formatNumber(quote.price, 2) : "--";
       const quoteClass = quote?.changeValue > 0 ? "up" : quote?.changeValue < 0 ? "down" : "";
+      const drawdownPct = getLatestDrawdownPct(stock.code);
+      const drawdownText = Number.isFinite(drawdownPct) ? `${formatNumber(drawdownPct, 2)}%` : "--";
+      const drawdownClass = Number.isFinite(drawdownPct)
+        ? drawdownPct > 0
+          ? "down"
+          : drawdownPct < 0
+            ? "up"
+            : ""
+        : "";
       const item = document.createElement("button");
       item.type = "button";
       item.draggable = true;
@@ -1623,6 +1639,7 @@ function renderWatchlist() {
           ${reminderBadge}
         </span>
         <span class="watch-quote ${quoteClass}">${quoteText}</span>
+        <span class="watch-drawdown ${drawdownClass}">${drawdownText}</span>
         <span class="watch-remove" role="button" aria-label="移除 ${stock.code}" title="移除 ${stock.code}">×</span>
       `;
       item.addEventListener("click", async () => {
