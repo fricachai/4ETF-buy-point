@@ -36,7 +36,7 @@ const BUY_REMINDER_RULES = {
   "00878": { min: 4.5, max: 5.5, addOn: 5 },
   "006208": { min: 5, max: 7, addOn: 7 },
   "2330": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
-  "00830": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
+  "00830": { min: 6, max: 8, addOn: 8 },
   "TPE: IX0001": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
 };
 
