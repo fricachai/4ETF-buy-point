@@ -398,6 +398,11 @@ h1 {
   white-space: nowrap;
 }
 
+.close-info-drawdown {
+  color: #ffe27a;
+  font-weight: 800;
+}
+
 h2 {
   font-size: 24px;
   font-weight: 700;

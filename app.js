@@ -525,6 +525,15 @@ function formatBuyReminderDescription(code) {
   return `買點：10個交易日收盤價跌幅 ${rangeText} ( -${addOn}% 時加碼 報酬率最高)`;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function formatLatestReminderSummary(code, latestSignal) {
   if (!latestSignal) return "";
   const rule = getBuyReminderRule(code);
@@ -532,6 +541,15 @@ function formatLatestReminderSummary(code, latestSignal) {
     return `K值 ${formatNumber(latestSignal.kValue, 2)}`;
   }
   return `累計跌幅 ${formatNumber(latestSignal.dropPct, 2)}%`;
+}
+
+function formatLatestReminderSummaryHtml(code, latestSignal) {
+  if (!latestSignal) return "";
+  const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") {
+    return `K值 ${escapeHtml(formatNumber(latestSignal.kValue, 2))}`;
+  }
+  return `累計跌幅 <span class="close-info-drawdown">${escapeHtml(formatNumber(latestSignal.dropPct, 2))}%</span>`;
 }
 
 function formatLatestReminderBadge(code, latestSignal) {
@@ -1701,19 +1719,25 @@ function renderAll() {
   const chartResult = renderChart(stock);
   const latestReminder = getBuyReminderData(stock.code).latestSignal;
   const realtimeQuote = state.realtimeQuotesByCode.get(stock.code);
-  const reminderText = latestReminder
-    ? ` | ${formatBuyReminderDescription(stock.code)} | ${formatLatestReminderSummary(stock.code, latestReminder)}`
-    : "";
   chartTitle.textContent = `${stock.code} ${stock.name}`;
   const displayPrice = realtimeQuote?.price ?? chartResult.lastClose;
-  const displayChangeValue = realtimeQuote?.changeValue ?? chartResult.changeValue;
-  const displayChangePct = realtimeQuote?.changePct ?? chartResult.changePct;
+  const intradayChangeValue = Number.isFinite(realtimeQuote?.price) && Number.isFinite(realtimeQuote?.previousClose)
+    ? realtimeQuote.price - realtimeQuote.previousClose
+    : null;
+  const intradayChangePct = Number.isFinite(intradayChangeValue) && Number.isFinite(realtimeQuote?.previousClose) && realtimeQuote.previousClose !== 0
+    ? (intradayChangeValue / realtimeQuote.previousClose) * 100
+    : null;
+  const displayChangeValue = Number.isFinite(intradayChangeValue) ? intradayChangeValue : chartResult.changeValue;
+  const displayChangePct = Number.isFinite(intradayChangePct) ? intradayChangePct : chartResult.changePct;
   const asOfText = realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
   const priceLabel = realtimeQuote?.priceSource ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
   const changeText = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
     ? ` | ${formatNumber(displayChangeValue, 2)} (${formatNumber(displayChangePct, 2)}%)`
     : "";
-  closeInfo.textContent = `${priceLabel}：${displayPrice != null ? formatNumber(displayPrice, 2) : "--"}${changeText}${asOfText}${reminderText}`;
+  const reminderHtml = latestReminder
+    ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
+    : "";
+  closeInfo.innerHTML = `${escapeHtml(priceLabel)}：${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}${escapeHtml(changeText)}${escapeHtml(asOfText)}${reminderHtml}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
     setStatus(`${stock.code} 目前只有日線資料，所以小時 K 會先用 1 日資料顯示。`, "error");
   }
