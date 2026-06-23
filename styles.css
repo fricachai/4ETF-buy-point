@@ -173,7 +173,7 @@ body.auth-locked {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-columns: minmax(0, 1fr) 470px;
   height: 100vh;
   overflow: hidden;
 }
@@ -184,7 +184,7 @@ body.auth-locked {
 
 .chart-panel,
 .watchlist-panel {
-  padding: 18px;
+  padding: 12px;
   height: 100vh;
   overflow: auto;
 }
@@ -390,9 +390,9 @@ h1 {
 
 .close-info {
   color: #d7dee9;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.35;
 }
 
 h2 {
@@ -447,19 +447,17 @@ h3 {
 
 .chart-stage {
   position: relative;
-  padding: 14px;
+  padding: 4px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
     linear-gradient(145deg, rgba(28, 37, 56, 0.68), rgba(14, 16, 22, 0.9));
-  border: 1px solid rgba(142, 177, 255, 0.18);
-  border-radius: 28px;
+  border: 1px solid rgba(142, 177, 255, 0.12);
+  border-radius: 20px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 0 36px rgba(99, 159, 255, 0.05),
-    0 0 0 1px rgba(118, 176, 255, 0.08),
-    0 18px 36px rgba(0, 0, 0, 0.26),
-    0 0 22px rgba(86, 157, 255, 0.12),
-    0 0 40px rgba(255, 150, 82, 0.06);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 16px rgba(99, 159, 255, 0.035),
+    0 0 0 1px rgba(118, 176, 255, 0.045),
+    0 12px 24px rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
   overflow: hidden;
@@ -475,8 +473,8 @@ h3 {
 }
 
 .chart-stage::before {
-  inset: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.045);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.015) 28%, rgba(255, 255, 255, 0.01)),
     radial-gradient(circle at top left, rgba(118, 181, 255, 0.12), transparent 34%),
@@ -485,18 +483,17 @@ h3 {
 }
 
 .chart-stage::after {
-  inset: -1px;
-  border: 1px solid rgba(113, 171, 255, 0.12);
+  inset: 0;
+  border: 1px solid rgba(113, 171, 255, 0.07);
   box-shadow:
-    0 0 18px rgba(91, 167, 255, 0.16),
-    0 0 28px rgba(255, 153, 102, 0.08);
+    0 0 10px rgba(91, 167, 255, 0.08);
 }
 
 #chartCanvas {
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 20px;
+  border-radius: 16px;
   background:
     linear-gradient(180deg, rgba(10, 11, 16, 0.98), rgba(11, 12, 17, 0.98)),
     #0b0c10;
@@ -512,6 +509,8 @@ h3 {
 .watchlist-panel {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.03));
   border-left: 1px solid var(--line);
+  padding-left: 12px;
+  padding-right: 10px;
 }
 
 .stock-form,

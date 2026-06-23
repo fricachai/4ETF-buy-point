@@ -996,14 +996,14 @@ function renderChart(stock) {
   const changeValue = lastCandle.close - prevClose;
   const changePct = prevClose === 0 ? 0 : ((lastCandle.close / prevClose) - 1) * 100;
 
-  const priceArea = { x: 42, y: 32, w: 1120, h: 380 };
-  const xAxisArea = { x: 42, y: 428, w: 1120, h: 38 };
-  const priceScaleArea = { x: 1162, y: 32, w: 78, h: 390 };
-  const signalToggleArea = { x: 1162, y: 428, w: 78, h: 38 };
-  const cciArea = { x: 42, y: 498, w: 1198, h: 88 };
-  const kdjArea = { x: 42, y: 622, w: 1198, h: 92 };
-  const macdArea = { x: 42, y: 750, w: 1198, h: 92 };
-  const volumeArea = { x: 42, y: 878, w: 1198, h: 92 };
+  const priceArea = { x: 18, y: 32, w: 1190, h: 380 };
+  const xAxisArea = { x: 18, y: 428, w: 1190, h: 38 };
+  const priceScaleArea = { x: 1208, y: 32, w: 64, h: 390 };
+  const signalToggleArea = { x: 1208, y: 428, w: 64, h: 38 };
+  const cciArea = { x: 18, y: 498, w: 1254, h: 88 };
+  const kdjArea = { x: 18, y: 622, w: 1254, h: 92 };
+  const macdArea = { x: 18, y: 750, w: 1254, h: 92 };
+  const volumeArea = { x: 18, y: 878, w: 1254, h: 92 };
   state.chartLayout = { priceArea, xAxisArea, priceScaleArea, signalToggleArea, volumeArea, macdArea, kdjArea, cciArea };
 
   drawRoundRect(
@@ -1708,7 +1708,7 @@ function renderAll() {
   const displayPrice = realtimeQuote?.price ?? chartResult.lastClose;
   const displayChangeValue = realtimeQuote?.changeValue ?? chartResult.changeValue;
   const displayChangePct = realtimeQuote?.changePct ?? chartResult.changePct;
-  const asOfText = realtimeQuote?.asOf ? ` | 即時 ${realtimeQuote.asOf}` : "";
+  const asOfText = realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
   const priceLabel = realtimeQuote?.priceSource ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
   const changeText = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
     ? ` | ${formatNumber(displayChangeValue, 2)} (${formatNumber(displayChangePct, 2)}%)`
@@ -1926,7 +1926,7 @@ function pickRealtimeDisplayPrice(row) {
 function getRealtimePriceLabel(quote) {
   switch (quote?.priceSource) {
     case "trade":
-      return "即時成交";
+      return "即時";
     case "match":
       return "即時試算";
     case "mid":
