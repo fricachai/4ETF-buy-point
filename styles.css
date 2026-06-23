@@ -605,13 +605,13 @@ input::placeholder {
   display: grid;
   grid-template-columns: 86px minmax(84px, 1fr) 68px 76px 22px;
   gap: 5px;
-  min-height: 36px;
-  padding: 3px 8px;
+  min-height: 32px;
+  padding: 2px 8px;
   font-size: 13px;
   border-bottom: 1px solid var(--line-soft);
   cursor: grab;
   user-select: none;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
   background: linear-gradient(90deg, rgba(247, 200, 67, 0.18), rgba(255, 255, 255, 0.06));
   box-shadow: inset 4px 0 0 rgba(247, 200, 67, 0.24);
   color: #ffffff;
@@ -619,13 +619,23 @@ input::placeholder {
 }
 
 .watch-item:hover {
-  background: linear-gradient(90deg, rgba(255, 218, 107, 0.2), rgba(255, 255, 255, 0.08));
+  background: linear-gradient(90deg, rgba(255, 232, 145, 0.32), rgba(255, 255, 255, 0.16));
+  box-shadow:
+    inset 4px 0 0 rgba(255, 226, 122, 0.72),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .watch-item.active {
   background: rgba(255, 255, 255, 0.94);
   box-shadow: inset 4px 0 0 var(--yellow);
   color: #111317;
+}
+
+.watch-item.active:hover {
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow:
+    inset 4px 0 0 #ffb020,
+    inset 0 0 0 1px rgba(255, 176, 32, 0.38);
 }
 
 .watch-item.dragging {
