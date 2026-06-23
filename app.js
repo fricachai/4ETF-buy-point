@@ -1915,6 +1915,27 @@ function formatRealtimeTimestamp(dateText, timeText, millisText) {
   return `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)} ${rawTime}`;
 }
 
+function getTaipeiNowParts() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Taipei",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  return Object.fromEntries(parts.map((part) => [part.type, part.value]));
+}
+
+function isTaiwanRegularTradingTime() {
+  const parts = getTaipeiNowParts();
+  if (["Sat", "Sun"].includes(parts.weekday)) return false;
+  const hour = Number(parts.hour);
+  const minute = Number(parts.minute);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return false;
+  const minutes = hour * 60 + minute;
+  return minutes >= 9 * 60 && minutes <= 13 * 60 + 30;
+}
+
 function parseQuoteLevel(rawText) {
   if (typeof rawText !== "string") return null;
   const firstValue = rawText.split("_").map((part) => parseNumber(part)).find(Number.isFinite);
@@ -1948,6 +1969,7 @@ function pickRealtimeDisplayPrice(row) {
 }
 
 function getRealtimePriceLabel(quote) {
+  if (!isTaiwanRegularTradingTime()) return "收盤價";
   switch (quote?.priceSource) {
     case "trade":
       return "即時";
