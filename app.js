@@ -996,14 +996,14 @@ function renderChart(stock) {
   const changeValue = lastCandle.close - prevClose;
   const changePct = prevClose === 0 ? 0 : ((lastCandle.close / prevClose) - 1) * 100;
 
-  const priceArea = { x: 18, y: 32, w: 1190, h: 380 };
-  const xAxisArea = { x: 18, y: 428, w: 1190, h: 38 };
-  const priceScaleArea = { x: 1208, y: 32, w: 64, h: 390 };
-  const signalToggleArea = { x: 1208, y: 428, w: 64, h: 38 };
-  const cciArea = { x: 18, y: 498, w: 1254, h: 88 };
-  const kdjArea = { x: 18, y: 622, w: 1254, h: 92 };
-  const macdArea = { x: 18, y: 750, w: 1254, h: 92 };
-  const volumeArea = { x: 18, y: 878, w: 1254, h: 92 };
+  const priceArea = { x: 0, y: 32, w: 1256, h: 380 };
+  const xAxisArea = { x: 0, y: 428, w: 1256, h: 38 };
+  const priceScaleArea = { x: 1256, y: 32, w: 64, h: 390 };
+  const signalToggleArea = { x: 1256, y: 428, w: 64, h: 38 };
+  const cciArea = { x: 0, y: 498, w: 1320, h: 88 };
+  const kdjArea = { x: 0, y: 622, w: 1320, h: 92 };
+  const macdArea = { x: 0, y: 750, w: 1320, h: 92 };
+  const volumeArea = { x: 0, y: 878, w: 1320, h: 92 };
   state.chartLayout = { priceArea, xAxisArea, priceScaleArea, signalToggleArea, volumeArea, macdArea, kdjArea, cciArea };
 
   drawRoundRect(

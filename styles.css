@@ -204,6 +204,8 @@ body.auth-locked {
 
 .chart-header {
   align-items: center;
+  position: relative;
+  padding-right: 80px;
 }
 
 .chart-header-main {
@@ -390,9 +392,10 @@ h1 {
 
 .close-info {
   color: #d7dee9;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
+  white-space: nowrap;
 }
 
 h2 {
@@ -410,6 +413,9 @@ h3 {
   align-items: center;
   justify-content: flex-end;
   flex: 0 0 auto;
+  position: absolute;
+  top: -4px;
+  right: 0;
 }
 
 .ghost-button,
