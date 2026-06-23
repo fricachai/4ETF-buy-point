@@ -66,7 +66,148 @@ async function handleTwseQuote(url) {
     origin: "https://mis.twse.com.tw",
     pragma: "no-cache",
     "cache-control": "no-cache",
-  }, 5);
+  }, 0);
+
+  if (response.ok) return response;
+  return handleYahooTwQuoteFallback(exCh);
+}
+
+async function handleYahooTwQuoteFallback(exCh) {
+  const symbols = getYahooSymbolsFromExCh(exCh);
+  if (!symbols.length) {
+    return json({ rtcode: "9999", rtmessage: "No supported quote symbols", msgArray: [] }, 502);
+  }
+
+  const upstream = new URL("https://tw.stock.yahoo.com/_td-stock/api/resource/StockServices.stockList;symbols=" + symbols.join(","));
+  try {
+    const response = await fetch(upstream.toString(), {
+      headers: {
+        accept: "application/json,text/plain,*/*",
+        "user-agent": "Mozilla/5.0",
+        referer: "https://tw.stock.yahoo.com/",
+        origin: "https://tw.stock.yahoo.com",
+        pragma: "no-cache",
+        "cache-control": "no-cache",
+      },
+      cf: {
+        cacheTtl: 0,
+        cacheEverything: false,
+      },
+    });
+    if (!response.ok) {
+      return json({ rtcode: "9999", rtmessage: `Yahoo fallback HTTP ${response.status}`, msgArray: [] }, 502);
+    }
+    const rows = await response.json();
+    const msgArray = Array.isArray(rows) ? rows.map(normalizeYahooQuote).filter(Boolean) : [];
+    return json({
+      msgArray,
+      referer: "https://tw.stock.yahoo.com/",
+      userDelay: 5000,
+      rtcode: "0000",
+      rtmessage: "OK",
+      source: "yahoo-tw-fallback",
+      queryTime: {
+        sysDate: formatTaipeiDateKey(new Date()),
+        sysTime: formatTaipeiTime(new Date()),
+      },
+    });
+  } catch (error) {
+    return json(
+      {
+        rtcode: "9999",
+        rtmessage: error instanceof Error ? error.message : "Yahoo fallback fetch failed",
+        msgArray: [],
+      },
+      502,
+    );
+  }
+}
+
+function getYahooSymbolsFromExCh(exCh) {
+  return exCh
+    .split("|")
+    .map((part) => {
+      const channel = part.trim();
+      if (!channel) return "";
+      if (channel === "tse_t00.tw" || channel === "t00.tw") return "^TWII";
+      const match = channel.match(/^tse_([0-9A-Z]+)\.tw$/i);
+      if (!match) return "";
+      return `${match[1].toUpperCase()}.TW`;
+    })
+    .filter(Boolean);
+}
+
+function normalizeYahooQuote(row) {
+  const symbol = String(row?.symbol || "");
+  const isIndex = symbol === "^TWII";
+  const code = isIndex ? "t00" : String(row?.systexId || symbol.replace(/\.TW$/i, "")).toUpperCase();
+  if (!code || code === "#001" && !isIndex) return null;
+
+  const tradeTime = row?.regularMarketTime ? new Date(row.regularMarketTime) : new Date();
+  const orderbook = Array.isArray(row?.orderbook) ? row.orderbook : [];
+  const askPrices = orderbook.map((level) => rawValue(level?.ask)).filter(Boolean);
+  const bidPrices = orderbook.map((level) => rawValue(level?.bid)).filter(Boolean);
+  const askVolumes = orderbook.map((level) => rawValue(level?.askVolK)).filter(Boolean);
+  const bidVolumes = orderbook.map((level) => rawValue(level?.bidVolK)).filter(Boolean);
+  const price = rawValue(row?.price);
+
+  return {
+    "@": isIndex ? "t00.tw" : `${code}.tw`,
+    c: code,
+    ch: isIndex ? "t00.tw" : `${code}.tw`,
+    d: formatTaipeiDateKey(tradeTime),
+    "%": formatTaipeiTime(tradeTime),
+    t: formatTaipeiTime(tradeTime),
+    tlong: String(tradeTime.getTime()),
+    h: rawValue(row?.regularMarketDayHigh),
+    l: rawValue(row?.regularMarketDayLow),
+    n: isIndex ? "發行量加權股價指數" : String(row?.symbolName || code),
+    nf: String(row?.symbolName || code),
+    o: rawValue(row?.regularMarketOpen),
+    y: rawValue(row?.regularMarketPreviousClose),
+    z: price,
+    pz: "-",
+    a: joinQuoteLevels(askPrices),
+    b: joinQuoteLevels(bidPrices),
+    f: joinQuoteLevels(askVolumes),
+    g: joinQuoteLevels(bidVolumes),
+    v: rawValue(row?.volumeK) || rawValue(row?.volume) || "0",
+    ex: "tse",
+    s: rawValue(row?.singleVolumeK) || "-",
+    tv: rawValue(row?.singleVolumeK) || "-",
+    ts: "0",
+    source: "yahoo-tw",
+  };
+}
+
+function rawValue(value) {
+  if (value == null) return "";
+  if (typeof value === "object" && "raw" in value) return rawValue(value.raw);
+  const text = String(value).replace(/,/g, "").trim();
+  return text && text !== "-" ? text : "";
+}
+
+function joinQuoteLevels(values) {
+  return values.length ? `${values.join("_")}_` : "";
+}
+
+function formatTaipeiDateKey(date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date).replaceAll("-", "");
+}
+
+function formatTaipeiTime(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Taipei",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(date);
 }
 
 async function handleTaiexChart(url) {
