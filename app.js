@@ -280,6 +280,13 @@ function formatNumber(value, digits = 2) {
   });
 }
 
+function formatSignedPercent(value, digits = 2) {
+  if (!Number.isFinite(value)) return "--";
+  const rounded = round(value, digits);
+  const sign = rounded > 0 ? "+" : rounded < 0 ? "-" : "";
+  return `${sign}${formatNumber(Math.abs(rounded), digits)}%`;
+}
+
 function formatCompactNumber(value) {
   if (!Number.isFinite(value)) return "--";
   const abs = Math.abs(value);
@@ -554,7 +561,7 @@ function formatLatestReminderSummary(code, latestSignal) {
   if (rule.mode === "kd-k") {
     return `K值 ${formatNumber(latestSignal.kValue, 2)}`;
   }
-  return `累計跌幅 ${formatNumber(latestSignal.dropPct, 2)}%`;
+  return `累計跌幅 ${formatSignedPercent(latestSignal.dropPct, 2)}`;
 }
 
 function formatLatestReminderSummaryHtml(code, latestSignal) {
@@ -563,7 +570,7 @@ function formatLatestReminderSummaryHtml(code, latestSignal) {
   if (rule.mode === "kd-k") {
     return `K值 ${escapeHtml(formatNumber(latestSignal.kValue, 2))}`;
   }
-  return `累計跌幅 <span class="close-info-drawdown">${escapeHtml(formatNumber(latestSignal.dropPct, 2))}%</span>`;
+  return `累計跌幅 <span class="close-info-drawdown">${escapeHtml(formatSignedPercent(latestSignal.dropPct, 2))}</span>`;
 }
 
 function formatLatestReminderBadge(code, latestSignal) {
@@ -572,7 +579,7 @@ function formatLatestReminderBadge(code, latestSignal) {
   if (rule.mode === "kd-k") {
     return `K ${formatNumber(latestSignal.kValue, 2)}`;
   }
-  return `${formatNumber(latestSignal.dropPct, 2)}%`;
+  return `${formatSignedPercent(latestSignal.dropPct, 2)}`;
 }
 
 function getLatestDrawdownPct(code) {
@@ -1670,7 +1677,7 @@ function renderAll() {
     : "";
   chartTitle.textContent = `${stock.code} ${stock.name}`;
   const changeText = chartResult.lastClose != null
-    ? ` | ${formatNumber(chartResult.changeValue, 2)} (${formatNumber(chartResult.changePct, 2)}%)`
+    ? ` | ${formatNumber(chartResult.changeValue, 2)} (${formatSignedPercent(chartResult.changePct, 2)})`
     : "";
   closeInfo.textContent = `收盤價：${chartResult.lastClose != null ? formatNumber(chartResult.lastClose, 2) : "--"}${changeText}${reminderText}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
@@ -1737,7 +1744,7 @@ function renderWatchlist() {
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
       const dayDropPct = getWatchlistDayDropPct(stock.code, quote);
-      const dayDropText = Number.isFinite(dayDropPct) ? `${formatNumber(dayDropPct, 2)}%` : "--";
+      const dayDropText = formatSignedPercent(dayDropPct, 2);
       const dayDropClass = Number.isFinite(dayDropPct)
         ? dayDropPct > 0
           ? "down"
@@ -1746,7 +1753,7 @@ function renderWatchlist() {
             : ""
         : "";
       const drawdownPct = getLatestDrawdownPct(stock.code);
-      const drawdownText = Number.isFinite(drawdownPct) ? `${formatNumber(drawdownPct, 2)}%` : "--";
+      const drawdownText = formatSignedPercent(drawdownPct, 2);
       const drawdownClass = Number.isFinite(drawdownPct)
         ? drawdownPct > 0
           ? "down"
@@ -1842,7 +1849,7 @@ function renderAll() {
   const asOfText = useRealtimePrice && realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
   const priceLabel = useRealtimePrice ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
   const changeHtml = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
-    ? ` | ${escapeHtml(formatNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatNumber(Math.abs(displayChangePct), 2))}%</span>)`
+    ? ` | ${escapeHtml(formatNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatSignedPercent(displayChangePct, 2))}</span>)`
     : "";
   const reminderHtml = latestReminder
     ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
