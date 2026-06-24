@@ -1813,13 +1813,13 @@ function renderAll() {
   const displayChangePct = Number.isFinite(intradayChangePct) ? intradayChangePct : chartResult.changePct;
   const asOfText = useRealtimePrice && realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
   const priceLabel = useRealtimePrice ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
-  const changeText = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
-    ? ` | ${formatNumber(displayChangeValue, 2)} (${formatNumber(displayChangePct, 2)}%)`
+  const changeHtml = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
+    ? ` | ${escapeHtml(formatNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatNumber(displayChangePct, 2))}%</span>)`
     : "";
   const reminderHtml = latestReminder
     ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
     : "";
-  closeInfo.innerHTML = `${escapeHtml(priceLabel)}：${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}${escapeHtml(changeText)}${escapeHtml(asOfText)}${reminderHtml}`;
+  closeInfo.innerHTML = `${escapeHtml(priceLabel)}：${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}${changeHtml}${escapeHtml(asOfText)}${reminderHtml}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
     setStatus(`${stock.code} 目前只有日線資料，所以小時 K 會先用 1 日資料顯示。`, "error");
   }
