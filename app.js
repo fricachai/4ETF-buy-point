@@ -1141,7 +1141,7 @@ function renderChart(stock) {
   );
 
   if (buySignalData.latestSignal?.inRange) {
-    drawChartReminderText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 18);
+    drawChartReminderText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 8);
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
@@ -1329,9 +1329,9 @@ function renderChart(stock) {
     ctx.restore();
   }
 
-  drawText("SMA5", priceArea.x + 10, priceArea.y + 18, "#7fd8ff", 12);
-  drawText("SMA20", priceArea.x + 74, priceArea.y + 18, "#ffe27a", 12);
-  drawText("SMA60", priceArea.x + 150, priceArea.y + 18, "#ff8f98", 12);
+  drawText("SMA5", priceArea.x + 10, priceArea.y + 8, "#7fd8ff", 12);
+  drawText("SMA20", priceArea.x + 74, priceArea.y + 8, "#ffe27a", 12);
+  drawText("SMA60", priceArea.x + 150, priceArea.y + 8, "#ff8f98", 12);
 
   const volumeMax = Math.max(1, ...visibleVolume);
   const mapVolumeY = (value) => volumeArea.y + ((volumeMax - value) / volumeMax) * volumeArea.h;
