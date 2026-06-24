@@ -1861,7 +1861,14 @@ function renderAll() {
   const reminderHtml = latestReminder
     ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
     : "";
-  const displayPriceHtml = `<span class="close-info-price">${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}</span>`;
+  const displayPriceClass = Number.isFinite(displayChangeValue)
+    ? displayChangeValue > 0
+      ? "up"
+      : displayChangeValue < 0
+        ? "down"
+        : ""
+    : "";
+  const displayPriceHtml = `<span class="close-info-price ${displayPriceClass}">${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}</span>`;
   closeInfo.innerHTML = `${escapeHtml(priceLabel)}：${displayPriceHtml}${changeHtml}${escapeHtml(asOfText)}${reminderHtml}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
     setStatus(`${stock.code} 目前只有日線資料，所以小時 K 會先用 1 日資料顯示。`, "error");

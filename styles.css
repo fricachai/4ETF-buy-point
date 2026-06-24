@@ -403,6 +403,14 @@ h1 {
   font-weight: 800;
 }
 
+.close-info-price.up {
+  color: #ff7f8c;
+}
+
+.close-info-price.down {
+  color: #4fd0a5;
+}
+
 .close-info-drawdown {
   color: #ffe27a;
   font-weight: 800;
@@ -761,15 +769,6 @@ input::placeholder {
 .watch-item.active .watch-day-drop.down,
 .watch-item.active .watch-drawdown.down {
   color: #0d8f66;
-}
-
-.watch-quote,
-.watch-quote.up,
-.watch-quote.down,
-.watch-item.active .watch-quote,
-.watch-item.active .watch-quote.up,
-.watch-item.active .watch-quote.down {
-  color: #ffe27a;
 }
 
 .watch-remove {
