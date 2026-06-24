@@ -280,6 +280,13 @@ function formatNumber(value, digits = 2) {
   });
 }
 
+function formatSignedNumber(value, digits = 2) {
+  if (!Number.isFinite(value)) return "--";
+  const rounded = round(value, digits);
+  const sign = rounded > 0 ? "+" : rounded < 0 ? "-" : "";
+  return `${sign}${formatNumber(Math.abs(rounded), digits)}`;
+}
+
 function formatSignedPercent(value, digits = 2) {
   if (!Number.isFinite(value)) return "--";
   const rounded = round(value, digits);
@@ -1677,7 +1684,7 @@ function renderAll() {
     : "";
   chartTitle.textContent = `${stock.code} ${stock.name}`;
   const changeText = chartResult.lastClose != null
-    ? ` | ${formatNumber(chartResult.changeValue, 2)} (${formatSignedPercent(chartResult.changePct, 2)})`
+    ? ` | ${formatSignedNumber(chartResult.changeValue, 2)} (${formatSignedPercent(chartResult.changePct, 2)})`
     : "";
   closeInfo.textContent = `收盤價：${chartResult.lastClose != null ? formatNumber(chartResult.lastClose, 2) : "--"}${changeText}${reminderText}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
@@ -1849,7 +1856,7 @@ function renderAll() {
   const asOfText = useRealtimePrice && realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
   const priceLabel = useRealtimePrice ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
   const changeHtml = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
-    ? ` | ${escapeHtml(formatNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatSignedPercent(displayChangePct, 2))}</span>)`
+    ? ` | ${escapeHtml(formatSignedNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatSignedPercent(displayChangePct, 2))}</span>)`
     : "";
   const reminderHtml = latestReminder
     ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
