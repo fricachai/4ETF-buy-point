@@ -35,6 +35,7 @@ const BUY_REMINDER_RULES = {
   "0056": { min: 6, max: 8, addOn: 8 },
   "00878": { min: 4.5, max: 5.5, addOn: 5 },
   "006208": { min: 5, max: 7, addOn: 7 },
+  "00646": { min: 4, max: 8, addOn: 7 },
   "2330": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
   "00830": { min: 4, max: 6, addOn: 6 },
   "TPE: IX0001": { mode: "kd-k", rangeMin: 20, rangeMax: 30, oversoldMax: 20 },
@@ -45,6 +46,7 @@ const DEFAULT_STOCKS = [
   { code: "0056", name: "元大高股息" },
   { code: "00878", name: "國泰永續高股息" },
   { code: "006208", name: "富邦台50" },
+  { code: "00646", name: "元大S&P500" },
   { code: "2330", name: "台積電" },
   { code: "00830", name: "國泰費城半導體" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
@@ -61,6 +63,7 @@ const KNOWN_STOCK_NAMES = {
   "0056": "元大高股息",
   "00878": "國泰永續高股息",
   "006208": "富邦台50",
+  "00646": "元大S&P500",
   "2330": "台積電",
   "00830": "國泰費城半導體",
 };
@@ -72,6 +75,7 @@ const ACTIVE_DEFAULT_STOCKS = [
   { code: "0056", name: "元大高股息" },
   { code: "0050", name: "元大台灣50" },
   { code: "006208", name: "富邦台50" },
+  { code: "00646", name: "元大S&P500" },
   { code: "00878", name: "國泰永續高股息" },
   { code: "00830", name: "國泰費城半導體" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
@@ -82,6 +86,7 @@ const ACTIVE_KNOWN_STOCK_NAMES = {
   "0056": "元大高股息",
   "00878": "國泰永續高股息",
   "006208": "富邦台50",
+  "00646": "元大S&P500",
   "00981A": "主動統一台股增長",
   "009804": "聯邦台精彩50",
   "TPE: IX0001": "台灣加權指數",
@@ -112,7 +117,7 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
-const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v5";
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v6";
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
