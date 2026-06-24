@@ -767,6 +767,26 @@ function drawText(text, x, y, color = "#f5f6fa", size = 14, align = "left") {
   ctx.fillText(text, x, y);
 }
 
+function drawChartReminderText(text, x, y) {
+  const fontSize = 12;
+  const paddingX = 8;
+  const height = 22;
+  ctx.save();
+  ctx.font = `${fontSize}px "Segoe UI", "Noto Sans TC", sans-serif`;
+  const width = Math.ceil(ctx.measureText(text).width) + paddingX * 2;
+  drawRoundRect(
+    x - paddingX,
+    y - 16,
+    width,
+    height,
+    7,
+    "rgba(45, 28, 6, 0.92)",
+    "rgba(255, 179, 71, 0.78)",
+  );
+  drawText(text, x, y, "#ffd27a", fontSize);
+  ctx.restore();
+}
+
 function drawRoundRect(x, y, width, height, radius, fill, stroke) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -1118,7 +1138,7 @@ function renderChart(stock) {
   );
 
   if (buySignalData.latestSignal?.inRange) {
-    drawText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 18, "#ffb347", 12);
+    drawChartReminderText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 18);
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
