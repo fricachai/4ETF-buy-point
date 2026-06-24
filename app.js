@@ -568,7 +568,7 @@ function formatLatestReminderSummary(code, latestSignal) {
   if (rule.mode === "kd-k") {
     return `K值 ${formatNumber(latestSignal.kValue, 2)}`;
   }
-  return `累計跌幅 ${formatSignedPercent(latestSignal.dropPct, 2)}`;
+  return `累計跌幅 ${formatSignedPercent(-latestSignal.dropPct, 2)}`;
 }
 
 function formatLatestReminderSummaryHtml(code, latestSignal) {
@@ -577,7 +577,7 @@ function formatLatestReminderSummaryHtml(code, latestSignal) {
   if (rule.mode === "kd-k") {
     return `K值 ${escapeHtml(formatNumber(latestSignal.kValue, 2))}`;
   }
-  return `累計跌幅 <span class="close-info-drawdown">${escapeHtml(formatSignedPercent(latestSignal.dropPct, 2))}</span>`;
+  return `累計跌幅 <span class="close-info-drawdown">${escapeHtml(formatSignedPercent(-latestSignal.dropPct, 2))}</span>`;
 }
 
 function formatLatestReminderBadge(code, latestSignal) {
@@ -586,7 +586,7 @@ function formatLatestReminderBadge(code, latestSignal) {
   if (rule.mode === "kd-k") {
     return `K ${formatNumber(latestSignal.kValue, 2)}`;
   }
-  return `${formatSignedPercent(latestSignal.dropPct, 2)}`;
+  return `${formatSignedPercent(-latestSignal.dropPct, 2)}`;
 }
 
 function getLatestDrawdownPct(code) {
@@ -1751,7 +1751,7 @@ function renderWatchlist() {
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
       const dayDropPct = getWatchlistDayDropPct(stock.code, quote);
-      const dayDropText = formatSignedPercent(dayDropPct, 2);
+      const dayDropText = formatSignedPercent(-dayDropPct, 2);
       const dayDropClass = Number.isFinite(dayDropPct)
         ? dayDropPct > 0
           ? "down"
@@ -1760,7 +1760,7 @@ function renderWatchlist() {
             : ""
         : "";
       const drawdownPct = getLatestDrawdownPct(stock.code);
-      const drawdownText = formatSignedPercent(drawdownPct, 2);
+      const drawdownText = formatSignedPercent(-drawdownPct, 2);
       const drawdownClass = Number.isFinite(drawdownPct)
         ? drawdownPct > 0
           ? "down"
