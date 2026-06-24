@@ -1118,7 +1118,7 @@ function renderChart(stock) {
   );
 
   if (buySignalData.latestSignal?.inRange) {
-    drawText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, 660, 42, "#ffb347", 16);
+    drawText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 18, "#ffb347", 12);
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
