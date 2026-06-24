@@ -1861,7 +1861,8 @@ function renderAll() {
   const reminderHtml = latestReminder
     ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
     : "";
-  closeInfo.innerHTML = `${escapeHtml(priceLabel)}：${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}${changeHtml}${escapeHtml(asOfText)}${reminderHtml}`;
+  const displayPriceHtml = `<span class="close-info-price">${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}</span>`;
+  closeInfo.innerHTML = `${escapeHtml(priceLabel)}：${displayPriceHtml}${changeHtml}${escapeHtml(asOfText)}${reminderHtml}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
     setStatus(`${stock.code} 目前只有日線資料，所以小時 K 會先用 1 日資料顯示。`, "error");
   }
