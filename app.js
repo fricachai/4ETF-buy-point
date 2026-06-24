@@ -67,11 +67,13 @@ const KNOWN_STOCK_NAMES = {
 };
 
 const ACTIVE_DEFAULT_STOCKS = [
-  { code: "0050", name: "元大台灣50" },
-  { code: "0056", name: "元大高股息" },
-  { code: "00878", name: "國泰永續高股息" },
-  { code: "006208", name: "富邦台50" },
   { code: "2330", name: "台積電" },
+  { code: "00981A", name: "主動統一台股增長" },
+  { code: "009804", name: "聯邦台精彩50" },
+  { code: "0056", name: "元大高股息" },
+  { code: "0050", name: "元大台灣50" },
+  { code: "006208", name: "富邦台50" },
+  { code: "00878", name: "國泰永續高股息" },
   { code: "00830", name: "國泰費城半導體" },
   { code: "TPE: IX0001", name: "台灣加權指數" },
 ];
@@ -81,6 +83,8 @@ const ACTIVE_KNOWN_STOCK_NAMES = {
   "0056": "元大高股息",
   "00878": "國泰永續高股息",
   "006208": "富邦台50",
+  "00981A": "主動統一台股增長",
+  "009804": "聯邦台精彩50",
   "TPE: IX0001": "台灣加權指數",
   "2330": "台積電",
   "00830": "國泰費城半導體",
@@ -109,7 +113,7 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
-const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v4";
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v5";
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
@@ -173,11 +177,7 @@ function migratePersistedWatchlist(persistedWatchlist) {
     if (window.localStorage.getItem(WATCHLIST_MIGRATION_KEY) === "1") {
       return persistedWatchlist;
     }
-    const additions = [
-      { code: "2330", name: ACTIVE_KNOWN_STOCK_NAMES["2330"] || "2330" },
-      { code: "00830", name: ACTIVE_KNOWN_STOCK_NAMES["00830"] || "00830" },
-      { code: "TPE: IX0001", name: ACTIVE_KNOWN_STOCK_NAMES["TPE: IX0001"] || "TPE: IX0001" },
-    ];
+    const defaultCodes = ACTIVE_DEFAULT_STOCKS.map((stock) => canonicalizeCode(stock.code));
     const target = persistedWatchlist
       ? {
         stocks: persistedWatchlist.stocks.filter((stock) => canonicalizeCode(stock.code) !== "006204"),
@@ -188,12 +188,21 @@ function migratePersistedWatchlist(persistedWatchlist) {
       persistedWatchlist?.stocks?.some((stock) => canonicalizeCode(stock.code) === "006204"),
     );
     if (target?.stocks?.length) {
-      additions.forEach((stock) => {
-        if (!target.stocks.some((entry) => canonicalizeCode(entry.code) === canonicalizeCode(stock.code))) {
-          target.stocks.push(stock);
-          changed = true;
-        }
+      const existingByCode = new Map(target.stocks.map((stock) => [canonicalizeCode(stock.code), stock]));
+      const orderedDefaults = ACTIVE_DEFAULT_STOCKS.map((stock) => {
+        const code = canonicalizeCode(stock.code);
+        const existing = existingByCode.get(code);
+        return {
+          code,
+          name: existing?.name || stock.name || ACTIVE_KNOWN_STOCK_NAMES[code] || code,
+        };
       });
+      const extras = target.stocks.filter((stock) => !defaultCodes.includes(canonicalizeCode(stock.code)));
+      const reorderedStocks = [...orderedDefaults, ...extras];
+      changed = changed
+        || reorderedStocks.length !== target.stocks.length
+        || reorderedStocks.some((stock, index) => canonicalizeCode(stock.code) !== canonicalizeCode(target.stocks[index]?.code));
+      target.stocks = reorderedStocks;
     }
     window.localStorage.setItem(WATCHLIST_MIGRATION_KEY, "1");
     if (!changed || !target) return persistedWatchlist;

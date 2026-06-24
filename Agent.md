@@ -55,17 +55,20 @@ Current focus:
 The active default list is controlled in `app.js`.
 
 At the time of this handoff it should include:
-- `0050`
-- `0056`
-- `00878`
-- `006208`
 - `2330`
+- `00981A`
+- `009804`
+- `0056`
+- `0050`
+- `006208`
+- `00878`
+- `00830`
 - `TPE: IX0001`
 
 Important:
 - existing users may still see old lists due to `localStorage`
 - watchlist migration logic is in `migratePersistedWatchlist()`
-- current migration key is `stock-observe-panel-watchlist-v3`
+- current migration key is `stock-observe-panel-watchlist-v5`
 
 ## Buy Reminder Rules
 
