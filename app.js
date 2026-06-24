@@ -1814,7 +1814,7 @@ function renderAll() {
   const asOfText = useRealtimePrice && realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
   const priceLabel = useRealtimePrice ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
   const changeHtml = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
-    ? ` | ${escapeHtml(formatNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatNumber(displayChangePct, 2))}%</span>)`
+    ? ` | ${escapeHtml(formatNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatNumber(Math.abs(displayChangePct), 2))}%</span>)`
     : "";
   const reminderHtml = latestReminder
     ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
