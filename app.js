@@ -10,6 +10,7 @@ const nameInput = document.getElementById("nameInput");
 const searchInput = document.getElementById("searchInput");
 const statusText = document.getElementById("statusText");
 const watchlistFileInput = document.getElementById("watchlistFileInput");
+const watchPriceHeader = document.getElementById("watchPriceHeader");
 const loginGate = document.getElementById("loginGate");
 const loginForm = document.getElementById("loginForm");
 const loginUsername = document.getElementById("loginUsername");
@@ -881,6 +882,7 @@ function getTradingDateKeyFromIso(isoString) {
 
 function mergeRealtimeQuoteIntoCandles(rawCandles, realtimeQuote) {
   const candles = (rawCandles || []).map((candle) => ({ ...candle }));
+  if (!isTaiwanRegularTradingTime()) return candles;
   if (!realtimeQuote || !Number.isFinite(realtimeQuote.price)) return candles;
 
   const tradeDateKey = realtimeQuote.tradeDate
@@ -1624,19 +1626,66 @@ function renderAll() {
   }
 }
 
+function getWatchlistPriceDisplay(code, quote) {
+  if (isTaiwanRegularTradingTime() && Number.isFinite(quote?.price)) {
+    return {
+      text: formatNumber(quote.price, 2),
+      className: quote.changeValue > 0 ? "up" : quote.changeValue < 0 ? "down" : "",
+    };
+  }
+
+  const dailyCandles = getDisplayCandles(code).candles;
+  const latest = dailyCandles[dailyCandles.length - 1];
+  const previous = dailyCandles[dailyCandles.length - 2];
+  const rawCandles = state.rawCandlesByCode.get(code) || [];
+  const rawLatest = rawCandles[rawCandles.length - 1];
+  const rawPrevious = rawCandles[rawCandles.length - 2];
+  const close = firstFiniteNumber(latest?.close, rawLatest?.close, quote?.previousClose);
+  const previousClose = firstFiniteNumber(previous?.close, rawPrevious?.close);
+  if (!Number.isFinite(close)) {
+    ensureWatchlistPriceData(code);
+    return { text: "--", className: "" };
+  }
+
+  const changeValue = Number.isFinite(previousClose) ? close - previousClose : 0;
+  return {
+    text: formatNumber(close, 2),
+    className: changeValue > 0 ? "up" : changeValue < 0 ? "down" : "",
+  };
+}
+
+async function ensureWatchlistPriceData(code) {
+  const normalizedCode = canonicalizeCode(code);
+  if (!normalizedCode || state.rawCandlesByCode.has(normalizedCode) || state.loadingCodes.has(normalizedCode)) return;
+  const stock = state.stocks.find((entry) => entry.code === normalizedCode);
+  state.loadingCodes.add(normalizedCode);
+  try {
+    const result = await fetchInstrumentDataWithFallback(normalizedCode, stock?.name || "");
+    upsertStock({ code: result.code, name: stock?.name || result.name });
+    state.rawCandlesByCode.set(normalizedCode, result.candles);
+    renderAll();
+  } catch {
+    // Keep the row as "--" until the next manual or scheduled refresh can retry.
+  } finally {
+    state.loadingCodes.delete(normalizedCode);
+  }
+}
+
 function renderWatchlist() {
   const keyword = searchInput.value.trim().toLowerCase();
+  if (watchPriceHeader) {
+    watchPriceHeader.textContent = isTaiwanRegularTradingTime() ? "即時價" : "收盤價";
+  }
   watchlistEl.innerHTML = "";
   state.stocks
     .filter((stock) => !keyword || stock.code.toLowerCase().includes(keyword) || stock.name.toLowerCase().includes(keyword))
     .forEach((stock) => {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const quote = state.realtimeQuotesByCode.get(stock.code);
+      const priceDisplay = getWatchlistPriceDisplay(stock.code, quote);
       const reminderBadge = reminder?.inRange
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
-      const quoteText = quote?.price != null ? formatNumber(quote.price, 2) : "--";
-      const quoteClass = quote?.changeValue > 0 ? "up" : quote?.changeValue < 0 ? "down" : "";
       const drawdownPct = getLatestDrawdownPct(stock.code);
       const drawdownText = Number.isFinite(drawdownPct) ? `${formatNumber(drawdownPct, 2)}%` : "--";
       const drawdownClass = Number.isFinite(drawdownPct)
@@ -1656,7 +1705,7 @@ function renderWatchlist() {
           <span class="watch-name">${stock.name}</span>
           ${reminderBadge}
         </span>
-        <span class="watch-quote ${quoteClass}">${quoteText}</span>
+        <span class="watch-quote ${priceDisplay.className}">${priceDisplay.text}</span>
         <span class="watch-drawdown ${drawdownClass}">${drawdownText}</span>
         <span class="watch-remove" role="button" aria-label="移除 ${stock.code}" title="移除 ${stock.code}">×</span>
       `;
@@ -1720,8 +1769,9 @@ function renderAll() {
   const latestReminder = getBuyReminderData(stock.code).latestSignal;
   const realtimeQuote = state.realtimeQuotesByCode.get(stock.code);
   chartTitle.textContent = `${stock.code} ${stock.name}`;
-  const displayPrice = realtimeQuote?.price ?? chartResult.lastClose;
-  const intradayChangeValue = Number.isFinite(realtimeQuote?.price) && Number.isFinite(realtimeQuote?.previousClose)
+  const useRealtimePrice = isTaiwanRegularTradingTime() && Number.isFinite(realtimeQuote?.price);
+  const displayPrice = useRealtimePrice ? realtimeQuote.price : chartResult.lastClose;
+  const intradayChangeValue = useRealtimePrice && Number.isFinite(realtimeQuote?.previousClose)
     ? realtimeQuote.price - realtimeQuote.previousClose
     : null;
   const intradayChangePct = Number.isFinite(intradayChangeValue) && Number.isFinite(realtimeQuote?.previousClose) && realtimeQuote.previousClose !== 0
@@ -1729,8 +1779,8 @@ function renderAll() {
     : null;
   const displayChangeValue = Number.isFinite(intradayChangeValue) ? intradayChangeValue : chartResult.changeValue;
   const displayChangePct = Number.isFinite(intradayChangePct) ? intradayChangePct : chartResult.changePct;
-  const asOfText = realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
-  const priceLabel = realtimeQuote?.priceSource ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
+  const asOfText = useRealtimePrice && realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
+  const priceLabel = useRealtimePrice ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
   const changeText = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
     ? ` | ${formatNumber(displayChangeValue, 2)} (${formatNumber(displayChangePct, 2)}%)`
     : "";
@@ -1918,9 +1968,12 @@ function formatRealtimeTimestamp(dateText, timeText, millisText) {
 function getTaipeiNowParts() {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "Asia/Taipei",
-    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: false,
   }).formatToParts(new Date());
   return Object.fromEntries(parts.map((part) => [part.type, part.value]));
@@ -1928,10 +1981,14 @@ function getTaipeiNowParts() {
 
 function isTaiwanRegularTradingTime() {
   const parts = getTaipeiNowParts();
-  if (["Sat", "Sun"].includes(parts.weekday)) return false;
-  const hour = Number(parts.hour);
+  const year = Number(parts.year);
+  const month = Number(parts.month);
+  const day = Number(parts.day);
+  const hour = Number(parts.hour) % 24;
   const minute = Number(parts.minute);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return false;
+  if (![year, month, day, hour, minute].every(Number.isFinite)) return false;
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  if (weekday === 0 || weekday === 6) return false;
   const minutes = hour * 60 + minute;
   return minutes >= 9 * 60 && minutes <= 13 * 60 + 30;
 }
@@ -2074,6 +2131,7 @@ function ensureRealtimeRefreshLoop() {
   if (realtimeRefreshTimer) return;
   realtimeRefreshTimer = window.setInterval(() => {
     refreshRealtimeQuotes();
+    renderWatchlist();
   }, REALTIME_REFRESH_MS);
 }
 
