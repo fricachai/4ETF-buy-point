@@ -695,6 +695,7 @@ input::placeholder {
 .watch-name-row {
   display: flex;
   flex-direction: column;
+  align-self: stretch;
   align-items: flex-start;
   justify-content: center;
   gap: 2px;
