@@ -772,18 +772,21 @@ function drawChartReminderText(text, x, y) {
   const paddingX = 8;
   const height = 22;
   ctx.save();
-  ctx.font = `${fontSize}px "Segoe UI", "Noto Sans TC", sans-serif`;
+  ctx.font = `700 ${fontSize}px "Segoe UI", "Noto Sans TC", sans-serif`;
   const width = Math.ceil(ctx.measureText(text).width) + paddingX * 2;
+  ctx.shadowColor = "rgba(255, 152, 17, 0.38)";
+  ctx.shadowBlur = 8;
   drawRoundRect(
     x - paddingX,
     y - 16,
     width,
     height,
     7,
-    "rgba(45, 28, 6, 0.92)",
-    "rgba(255, 179, 71, 0.78)",
+    "rgba(255, 241, 208, 0.96)",
+    "rgba(255, 152, 17, 0.96)",
   );
-  drawText(text, x, y, "#ffd27a", fontSize);
+  ctx.shadowBlur = 0;
+  drawText(text, x, y, "#7a3d00", fontSize);
   ctx.restore();
 }
 
