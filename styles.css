@@ -411,6 +411,23 @@ h1 {
   color: #4fd0a5;
 }
 
+.close-info-change {
+  color: #ffe27a;
+  font-weight: 800;
+}
+
+.close-info-change.up,
+.close-info-day-drop.up,
+.close-info-drawdown.up {
+  color: #ff7f8c;
+}
+
+.close-info-change.down,
+.close-info-day-drop.down,
+.close-info-drawdown.down {
+  color: #4fd0a5;
+}
+
 .close-info-drawdown {
   color: #ffe27a;
   font-weight: 800;

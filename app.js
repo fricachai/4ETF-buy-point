@@ -294,6 +294,11 @@ function formatSignedPercent(value, digits = 2) {
   return `${sign}${formatNumber(Math.abs(rounded), digits)}%`;
 }
 
+function getDirectionClass(value) {
+  if (!Number.isFinite(value)) return "";
+  return value > 0 ? "up" : value < 0 ? "down" : "";
+}
+
 function formatCompactNumber(value) {
   if (!Number.isFinite(value)) return "--";
   const abs = Math.abs(value);
@@ -577,7 +582,8 @@ function formatLatestReminderSummaryHtml(code, latestSignal) {
   if (rule.mode === "kd-k") {
     return `K值 ${escapeHtml(formatNumber(latestSignal.kValue, 2))}`;
   }
-  return `累計跌幅 <span class="close-info-drawdown">${escapeHtml(formatSignedPercent(-latestSignal.dropPct, 2))}</span>`;
+  const signedDropPct = -latestSignal.dropPct;
+  return `累計跌幅 <span class="close-info-drawdown ${getDirectionClass(signedDropPct)}">${escapeHtml(formatSignedPercent(signedDropPct, 2))}</span>`;
 }
 
 function formatLatestReminderBadge(code, latestSignal) {
@@ -1855,19 +1861,15 @@ function renderAll() {
   const displayChangePct = Number.isFinite(intradayChangePct) ? intradayChangePct : chartResult.changePct;
   const asOfText = useRealtimePrice && realtimeQuote?.asOf ? ` | ${realtimeQuote.asOf}` : "";
   const priceLabel = useRealtimePrice ? getRealtimePriceLabel(realtimeQuote) : "收盤價";
+  const changeClass = getDirectionClass(displayChangeValue);
+  const changePctClass = getDirectionClass(displayChangePct);
   const changeHtml = Number.isFinite(displayPrice) && Number.isFinite(displayChangeValue) && Number.isFinite(displayChangePct)
-    ? ` | ${escapeHtml(formatSignedNumber(displayChangeValue, 2))} 單日跌幅(<span class="close-info-day-drop">${escapeHtml(formatSignedPercent(displayChangePct, 2))}</span>)`
+    ? ` | <span class="close-info-change ${changeClass}">${escapeHtml(formatSignedNumber(displayChangeValue, 2))}</span> 單日漲跌幅(<span class="close-info-day-drop ${changePctClass}">${escapeHtml(formatSignedPercent(displayChangePct, 2))}</span>)`
     : "";
   const reminderHtml = latestReminder
     ? ` | ${escapeHtml(formatBuyReminderDescription(stock.code))} | ${formatLatestReminderSummaryHtml(stock.code, latestReminder)}`
     : "";
-  const displayPriceClass = Number.isFinite(displayChangeValue)
-    ? displayChangeValue > 0
-      ? "up"
-      : displayChangeValue < 0
-        ? "down"
-        : ""
-    : "";
+  const displayPriceClass = getDirectionClass(displayChangeValue);
   const displayPriceHtml = `<span class="close-info-price ${displayPriceClass}">${escapeHtml(displayPrice != null ? formatNumber(displayPrice, 2) : "--")}</span>`;
   closeInfo.innerHTML = `${escapeHtml(priceLabel)}：${displayPriceHtml}${changeHtml}${escapeHtml(asOfText)}${reminderHtml}`;
   if (chartResult.fallback && state.timeframe !== "1d") {
