@@ -2038,7 +2038,7 @@ function getRealtimePriceLabel(quote) {
   if (!isTaiwanRegularTradingTime()) return "收盤價";
   switch (quote?.priceSource) {
     case "trade":
-      return "即時";
+      return "即時價";
     case "match":
       return "即時試算";
     case "mid":

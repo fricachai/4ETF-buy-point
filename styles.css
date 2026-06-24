@@ -771,18 +771,20 @@ input::placeholder {
   flex: 0 0 auto;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(255, 152, 17, 0.16);
-  border: 1px solid rgba(255, 152, 17, 0.45);
-  color: #9a4f00;
+  background: #5f3a08;
+  border: 1px solid #d88919;
+  color: #fff3cf;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22);
 }
 
 .watch-item.active .watch-alert-badge {
-  color: #9a4f00;
-  background: rgba(255, 152, 17, 0.16);
-  border-color: rgba(255, 152, 17, 0.45);
+  color: #6f3700;
+  background: #fff1d0;
+  border-color: #c97913;
+  box-shadow: none;
 }
 
 @media (max-width: 1280px) {
