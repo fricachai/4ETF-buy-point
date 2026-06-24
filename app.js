@@ -7,7 +7,6 @@ const watchlistEl = document.getElementById("watchlist");
 const stockForm = document.getElementById("stockForm");
 const codeInput = document.getElementById("codeInput");
 const nameInput = document.getElementById("nameInput");
-const searchInput = document.getElementById("searchInput");
 const statusText = document.getElementById("statusText");
 const watchlistFileInput = document.getElementById("watchlistFileInput");
 const watchPriceHeader = document.getElementById("watchPriceHeader");
@@ -576,6 +575,24 @@ function getLatestDrawdownPct(code) {
   if (!candles.length) return null;
   const latestDrawdown = calculateDrawdownWindow(candles, candles.length - 1, DEFAULT_DRAWDOWN_RULE);
   return Number.isFinite(latestDrawdown?.dropPct) ? latestDrawdown.dropPct : null;
+}
+
+function getWatchlistDayDropPct(code, quote) {
+  if (isTaiwanRegularTradingTime() && Number.isFinite(quote?.changePct)) {
+    return -quote.changePct;
+  }
+
+  const dailyCandles = getDisplayCandles(code).candles;
+  const latest = dailyCandles[dailyCandles.length - 1];
+  const previous = dailyCandles[dailyCandles.length - 2];
+  const rawCandles = state.rawCandlesByCode.get(code) || [];
+  const rawLatest = rawCandles[rawCandles.length - 1];
+  const rawPrevious = rawCandles[rawCandles.length - 2];
+  const close = firstFiniteNumber(latest?.close, rawLatest?.close);
+  const previousClose = firstFiniteNumber(previous?.close, rawPrevious?.close, quote?.previousClose);
+
+  if (!Number.isFinite(close) || !Number.isFinite(previousClose) || previousClose === 0) return null;
+  return ((previousClose - close) / previousClose) * 100;
 }
 
 function calculateDrawdownWindow(candles, endIndex, rule, lookback = BUY_REMINDER_LOOKBACK) {
@@ -1533,10 +1550,8 @@ function renderChart(stock) {
 }
 
 function renderWatchlist() {
-  const keyword = searchInput.value.trim().toLowerCase();
   watchlistEl.innerHTML = "";
   state.stocks
-    .filter((stock) => !keyword || stock.code.toLowerCase().includes(keyword) || stock.name.toLowerCase().includes(keyword))
     .forEach((stock) => {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const quote = state.realtimeQuotesByCode.get(stock.code);
@@ -1681,19 +1696,26 @@ async function ensureWatchlistPriceData(code) {
 }
 
 function renderWatchlist() {
-  const keyword = searchInput.value.trim().toLowerCase();
   if (watchPriceHeader) {
     watchPriceHeader.textContent = isTaiwanRegularTradingTime() ? "即時價" : "收盤價";
   }
   watchlistEl.innerHTML = "";
   state.stocks
-    .filter((stock) => !keyword || stock.code.toLowerCase().includes(keyword) || stock.name.toLowerCase().includes(keyword))
     .forEach((stock) => {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const quote = state.realtimeQuotesByCode.get(stock.code);
       const priceDisplay = getWatchlistPriceDisplay(stock.code, quote);
       const reminderBadge = reminder?.inRange
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
+        : "";
+      const dayDropPct = getWatchlistDayDropPct(stock.code, quote);
+      const dayDropText = Number.isFinite(dayDropPct) ? `${formatNumber(dayDropPct, 2)}%` : "--";
+      const dayDropClass = Number.isFinite(dayDropPct)
+        ? dayDropPct > 0
+          ? "down"
+          : dayDropPct < 0
+            ? "up"
+            : ""
         : "";
       const drawdownPct = getLatestDrawdownPct(stock.code);
       const drawdownText = Number.isFinite(drawdownPct) ? `${formatNumber(drawdownPct, 2)}%` : "--";
@@ -1715,6 +1737,7 @@ function renderWatchlist() {
           ${reminderBadge}
         </span>
         <span class="watch-quote ${priceDisplay.className}">${priceDisplay.text}</span>
+        <span class="watch-day-drop ${dayDropClass}">${dayDropText}</span>
         <span class="watch-drawdown ${drawdownClass}">${drawdownText}</span>
         <span class="watch-remove" role="button" aria-label="移除 ${stock.code}" title="移除 ${stock.code}">×</span>
       `;
@@ -2654,8 +2677,6 @@ stockForm.addEventListener("submit", async (event) => {
     nameInput.value = "";
   }
 });
-
-searchInput.addEventListener("input", renderWatchlist);
 
 watchlistFileInput.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
