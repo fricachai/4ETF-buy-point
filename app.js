@@ -602,11 +602,15 @@ function formatLatestReminderBadge(code, latestSignal) {
   return `${formatSignedPercent(-latestSignal.dropPct, 2)}`;
 }
 
-function shouldShowWatchlistReminderBadge(code, latestSignal) {
+function shouldShowBuyReminder(code, latestSignal) {
   if (!latestSignal) return false;
   const rule = getBuyReminderRule(code);
   if (rule.mode === "kd-k") return Boolean(latestSignal.inRange);
   return Number.isFinite(latestSignal.dropPct) && latestSignal.dropPct >= rule.min;
+}
+
+function shouldShowWatchlistReminderBadge(code, latestSignal) {
+  return shouldShowBuyReminder(code, latestSignal);
 }
 
 function getLatestDrawdownPct(code) {
@@ -1104,9 +1108,9 @@ function renderChart(stock) {
   const changeValue = lastCandle.close - prevClose;
   const changePct = prevClose === 0 ? 0 : ((lastCandle.close / prevClose) - 1) * 100;
 
-  const priceArea = { x: 0, y: 32, w: 1256, h: 380 };
+  const priceArea = { x: 0, y: 18, w: 1256, h: 394 };
   const xAxisArea = { x: 0, y: 428, w: 1256, h: 38 };
-  const priceScaleArea = { x: 1256, y: 32, w: 64, h: 390 };
+  const priceScaleArea = { x: 1256, y: 18, w: 64, h: 404 };
   const signalToggleArea = { x: 1256, y: 428, w: 64, h: 38 };
   const cciArea = { x: 0, y: 498, w: 1320, h: 88 };
   const kdjArea = { x: 0, y: 622, w: 1320, h: 92 };
@@ -1179,7 +1183,7 @@ function renderChart(stock) {
     "center",
   );
 
-  if (buySignalData.latestSignal?.inRange) {
+  if (shouldShowBuyReminder(stock.code, buySignalData.latestSignal)) {
     drawChartReminderText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 8);
   }
 
