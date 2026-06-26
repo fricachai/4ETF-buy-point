@@ -587,12 +587,19 @@ function formatLatestReminderSummaryHtml(code, latestSignal) {
 }
 
 function formatLatestReminderBadge(code, latestSignal) {
-  if (!latestSignal?.inRange) return "";
+  if (!latestSignal) return "";
   const rule = getBuyReminderRule(code);
   if (rule.mode === "kd-k") {
     return `K ${formatNumber(latestSignal.kValue, 2)}`;
   }
   return `${formatSignedPercent(-latestSignal.dropPct, 2)}`;
+}
+
+function shouldShowWatchlistReminderBadge(code, latestSignal) {
+  if (!latestSignal) return false;
+  const rule = getBuyReminderRule(code);
+  if (rule.mode === "kd-k") return Boolean(latestSignal.inRange);
+  return Number.isFinite(latestSignal.dropPct) && latestSignal.dropPct >= rule.min;
 }
 
 function getLatestDrawdownPct(code) {
@@ -1604,7 +1611,7 @@ function renderWatchlist() {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const quote = state.realtimeQuotesByCode.get(stock.code);
       const fallbackLastClose = getDisplayCandles(stock.code).candles.at(-1)?.close;
-      const reminderBadge = reminder?.inRange
+      const reminderBadge = shouldShowWatchlistReminderBadge(stock.code, reminder)
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
       const quoteText = quote?.price != null
@@ -1753,7 +1760,7 @@ function renderWatchlist() {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const quote = state.realtimeQuotesByCode.get(stock.code);
       const priceDisplay = getWatchlistPriceDisplay(stock.code, quote);
-      const reminderBadge = reminder?.inRange
+      const reminderBadge = shouldShowWatchlistReminderBadge(stock.code, reminder)
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
       const dayDropPct = getWatchlistDayDropPct(stock.code, quote);
