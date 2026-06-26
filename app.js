@@ -119,7 +119,7 @@ const state = {
 };
 
 const AUTH_CONFIG = {
-  usernames: ["frica", "jimmy"],
+  usernames: ["frica", "jimmy", "frank"],
   password: "stock2026",
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
