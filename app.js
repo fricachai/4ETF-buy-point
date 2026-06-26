@@ -1184,7 +1184,7 @@ function renderChart(stock) {
   );
 
   if (shouldShowBuyReminder(stock.code, buySignalData.latestSignal)) {
-    drawChartReminderText(`買點提醒: ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 8);
+    drawChartReminderText(`[買點提醒] ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 8);
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
@@ -1372,9 +1372,19 @@ function renderChart(stock) {
     ctx.restore();
   }
 
-  drawText("5T", priceArea.x + 10, priceArea.y + 8, SMA5_COLOR, 12);
-  drawText("20T", priceArea.x + 58, priceArea.y + 8, SMA20_COLOR, 12);
-  drawText("60T", priceArea.x + 118, priceArea.y + 8, SMA60_COLOR, 12);
+  ctx.save();
+  ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
+  const smaLabelGap = ctx.measureText("T").width;
+  let smaLabelX = priceArea.x + 10;
+  [
+    ["5T", SMA5_COLOR],
+    ["20T", SMA20_COLOR],
+    ["60T", SMA60_COLOR],
+  ].forEach(([label, color]) => {
+    drawText(label, smaLabelX, priceArea.y + 8, color, 12);
+    smaLabelX += ctx.measureText(label).width + smaLabelGap;
+  });
+  ctx.restore();
 
   const volumeMax = Math.max(1, ...visibleVolume);
   const mapVolumeY = (value) => volumeArea.y + ((volumeMax - value) / volumeMax) * volumeArea.h;
