@@ -867,6 +867,18 @@ input::placeholder {
 
   .watchlist {
     max-height: none;
+    overflow-x: auto;
+  }
+
+  .watchlist-header,
+  .watch-item {
+    grid-template-columns: 78px 220px 44px 70px 58px 58px 18px;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .watchlist-header span:nth-child(2) {
+    justify-content: flex-start;
   }
 }
 
