@@ -1778,6 +1778,16 @@ function getWatchlistKValue(code) {
   return Number.isFinite(latestK) ? latestK : null;
 }
 
+function getWatchlistNameColumnWidth() {
+  ctx.save();
+  ctx.font = `13px "Segoe UI", "Noto Sans TC", sans-serif`;
+  const maxNameWidth = state.stocks.reduce((maxWidth, stock) => {
+    return Math.max(maxWidth, ctx.measureText(stock.name || "").width);
+  }, ctx.measureText("名稱").width);
+  ctx.restore();
+  return Math.ceil(maxNameWidth + 18);
+}
+
 async function ensureWatchlistPriceData(code) {
   const normalizedCode = canonicalizeCode(code);
   if (!normalizedCode || state.rawCandlesByCode.has(normalizedCode) || state.loadingCodes.has(normalizedCode)) return;
@@ -1799,6 +1809,7 @@ function renderWatchlist() {
   if (watchPriceHeader) {
     watchPriceHeader.textContent = isTaiwanRegularTradingTime() ? "即時價" : "收盤價";
   }
+  watchlistEl.parentElement?.style.setProperty("--watch-name-col", `${getWatchlistNameColumnWidth()}px`);
   watchlistEl.innerHTML = "";
   state.stocks
     .forEach((stock) => {
@@ -2165,6 +2176,7 @@ function pickRealtimeDisplayPrice(row) {
 }
 
 function getRealtimePriceLabel(quote) {
+  return isTaiwanRegularTradingTime() ? "即時價" : "收盤價";
   if (!isTaiwanRegularTradingTime()) return "收盤價";
   switch (quote?.priceSource) {
     case "trade":
