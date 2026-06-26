@@ -1733,6 +1733,23 @@ function getWatchlistPriceDisplay(code, quote) {
   };
 }
 
+function getWatchlistKValue(code) {
+  const dailyCandles = aggregateCandles(
+    mergeRealtimeQuoteIntoCandles(
+      state.rawCandlesByCode.get(code) || [],
+      state.realtimeQuotesByCode.get(code),
+    ),
+    "1d",
+  ).candles;
+  if (!dailyCandles.length) {
+    ensureWatchlistPriceData(code);
+    return null;
+  }
+  const kd = computeKd(dailyCandles);
+  const latestK = kd.k[kd.k.length - 1];
+  return Number.isFinite(latestK) ? latestK : null;
+}
+
 async function ensureWatchlistPriceData(code) {
   const normalizedCode = canonicalizeCode(code);
   if (!normalizedCode || state.rawCandlesByCode.has(normalizedCode) || state.loadingCodes.has(normalizedCode)) return;
@@ -1760,6 +1777,8 @@ function renderWatchlist() {
       const reminder = getBuyReminderData(stock.code).latestSignal;
       const quote = state.realtimeQuotesByCode.get(stock.code);
       const priceDisplay = getWatchlistPriceDisplay(stock.code, quote);
+      const latestK = getWatchlistKValue(stock.code);
+      const kText = Number.isFinite(latestK) ? formatNumber(latestK, 2) : "--";
       const reminderBadge = shouldShowWatchlistReminderBadge(stock.code, reminder)
         ? `<span class="watch-alert-badge">${formatBuyReminderRule(stock.code)} / ${formatLatestReminderBadge(stock.code, reminder)}</span>`
         : "";
@@ -1791,6 +1810,7 @@ function renderWatchlist() {
           <span class="watch-name">${stock.name}</span>
           ${reminderBadge}
         </span>
+        <span class="watch-k">${kText}</span>
         <span class="watch-quote ${priceDisplay.className}">${priceDisplay.text}</span>
         <span class="watch-day-drop ${dayDropClass}">${dayDropText}</span>
         <span class="watch-drawdown ${drawdownClass}">${drawdownText}</span>
