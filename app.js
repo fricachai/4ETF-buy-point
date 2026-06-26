@@ -907,6 +907,7 @@ function getSmaLegendLayout(priceArea) {
   ctx.save();
   ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
   const gap = ctx.measureText("T").width;
+  const reminderGap = Math.max(18, gap * 2.5);
   let x = priceArea.x + 10;
   const entries = [
     { label: "5T", color: SMA5_COLOR, x },
@@ -918,7 +919,7 @@ function getSmaLegendLayout(priceArea) {
     x += ctx.measureText(entry.label).width + gap;
   });
   ctx.restore();
-  return { entries, gap, endX: x - gap };
+  return { entries, gap, reminderGap, endX: x - gap };
 }
 
 function getNativeIntervalHours(candles) {
@@ -1203,7 +1204,7 @@ function renderChart(stock) {
 
   const smaLegendLayout = getSmaLegendLayout(priceArea);
   if (shouldShowBuyReminder(stock.code, buySignalData.latestSignal)) {
-    drawChartReminderText(`[買點提醒] ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, smaLegendLayout.endX + smaLegendLayout.gap, priceArea.y + 8);
+    drawChartReminderText(`[買點提醒] ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, smaLegendLayout.endX + smaLegendLayout.reminderGap, priceArea.y + 8);
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
