@@ -33,6 +33,9 @@ const CHART_CROSSHAIR_COLOR = "#f7b51c";
 const CHART_CROSSHAIR_TAG_FILL = "rgba(247, 181, 28, 0.98)";
 const CHART_CROSSHAIR_TAG_STROKE = "rgba(255, 214, 99, 0.95)";
 const CHART_CROSSHAIR_TAG_TEXT = "#111317";
+const SMA5_COLOR = "#fff238";
+const SMA20_COLOR = "#b829f7";
+const SMA60_COLOR = "#35e6c6";
 const DEFAULT_DRAWDOWN_RULE = { min: 4, max: 6, addOn: 6 };
 const BUY_REMINDER_RULES = {
   "0050": { min: 5, max: 7, addOn: 7 },
@@ -1302,9 +1305,9 @@ function renderChart(stock) {
     ctx.fillRect(x - candleWidth * 0.3, Math.min(openY, closeY), candleWidth * 0.6, Math.max(2, Math.abs(closeY - openY)));
   });
 
-  drawLineSeries(priceArea, candleWidth, panX, visibleSma5, mapPriceY, "#36b4ff", 2.2);
-  drawLineSeries(priceArea, candleWidth, panX, visibleSma20, mapPriceY, "#f7c843", 2.2);
-  drawLineSeries(priceArea, candleWidth, panX, visibleSma60, mapPriceY, "#ff5e67", 2.2);
+  drawLineSeries(priceArea, candleWidth, panX, visibleSma5, mapPriceY, SMA5_COLOR, 2.2);
+  drawLineSeries(priceArea, candleWidth, panX, visibleSma20, mapPriceY, SMA20_COLOR, 2.2);
+  drawLineSeries(priceArea, candleWidth, panX, visibleSma60, mapPriceY, SMA60_COLOR, 2.2);
   ctx.restore();
 
   if (state.showSignalTags) {
@@ -1365,9 +1368,9 @@ function renderChart(stock) {
     ctx.restore();
   }
 
-  drawText("SMA5", priceArea.x + 10, priceArea.y + 8, "#7fd8ff", 12);
-  drawText("SMA20", priceArea.x + 74, priceArea.y + 8, "#ffe27a", 12);
-  drawText("SMA60", priceArea.x + 150, priceArea.y + 8, "#ff8f98", 12);
+  drawText("5T", priceArea.x + 10, priceArea.y + 8, SMA5_COLOR, 12);
+  drawText("20T", priceArea.x + 58, priceArea.y + 8, SMA20_COLOR, 12);
+  drawText("60T", priceArea.x + 118, priceArea.y + 8, SMA60_COLOR, 12);
 
   const volumeMax = Math.max(1, ...visibleVolume);
   const mapVolumeY = (value) => volumeArea.y + ((volumeMax - value) / volumeMax) * volumeArea.h;
