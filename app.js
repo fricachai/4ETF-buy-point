@@ -29,6 +29,10 @@ const DATA_START_YEAR = 2020;
 const DATA_START_MONTH = 1;
 const BUY_REMINDER_LOOKBACK = 10;
 const REALTIME_REFRESH_MS = 20000;
+const CHART_CROSSHAIR_COLOR = "#f7b51c";
+const CHART_CROSSHAIR_TAG_FILL = "rgba(247, 181, 28, 0.98)";
+const CHART_CROSSHAIR_TAG_STROKE = "rgba(255, 214, 99, 0.95)";
+const CHART_CROSSHAIR_TAG_TEXT = "#111317";
 const DEFAULT_DRAWDOWN_RULE = { min: 4, max: 6, addOn: 6 };
 const BUY_REMINDER_RULES = {
   "0050": { min: 5, max: 7, addOn: 7 },
@@ -872,8 +876,8 @@ function drawAxisValueTag(area, y, valueText, side = "left") {
       ? area.x + area.w - width - 6
       : area.x + 6;
   const boxY = clamp(textBaselineY - 14, area.y, area.y + area.h - height);
-  drawRoundRect(boxX, boxY, width, height, radius, "rgba(71, 85, 130, 0.96)", "rgba(255,255,255,0.26)");
-  drawText(valueText, boxX + width / 2, textBaselineY, "#f5f6fa", 12, "center");
+  drawRoundRect(boxX, boxY, width, height, radius, CHART_CROSSHAIR_TAG_FILL, CHART_CROSSHAIR_TAG_STROKE);
+  drawText(valueText, boxX + width / 2, textBaselineY, CHART_CROSSHAIR_TAG_TEXT, 12, "center");
   ctx.restore();
 }
 
@@ -887,8 +891,8 @@ function drawXAxisHoverTag(area, x, valueText) {
   const width = ctx.measureText(valueText).width + paddingX * 2;
   const boxX = clamp(x - width / 2, area.x + 4, area.x + area.w - width - 4);
   const boxY = clamp(textBaselineY - 15, area.y + 2, area.y + area.h - height - 2);
-  drawRoundRect(boxX, boxY, width, height, radius, "rgba(71, 85, 130, 0.96)", "rgba(255,255,255,0.26)");
-  drawText(valueText, boxX + width / 2, textBaselineY, "#f5f6fa", 12, "center");
+  drawRoundRect(boxX, boxY, width, height, radius, CHART_CROSSHAIR_TAG_FILL, CHART_CROSSHAIR_TAG_STROKE);
+  drawText(valueText, boxX + width / 2, textBaselineY, CHART_CROSSHAIR_TAG_TEXT, 12, "center");
   ctx.restore();
 }
 
@@ -1480,14 +1484,12 @@ function renderChart(stock) {
       volumeArea.y + volumeArea.h,
     );
     ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.82)";
+    ctx.strokeStyle = CHART_CROSSHAIR_COLOR;
     ctx.lineWidth = 1;
-    ctx.setLineDash([6, 6]);
     ctx.beginPath();
     ctx.moveTo(lineX, priceArea.y);
     ctx.lineTo(lineX, crosshairBottom);
     ctx.stroke();
-    ctx.setLineDash([]);
     ctx.restore();
   }
 
@@ -1505,9 +1507,8 @@ function renderChart(stock) {
   if (activeHorizontalArea && state.chartView.hoverY != null) {
     const lineY = clamp(state.chartView.hoverY, activeHorizontalArea.y, activeHorizontalArea.y + activeHorizontalArea.h);
     ctx.save();
-    ctx.strokeStyle = "rgba(255,255,255,0.68)";
+    ctx.strokeStyle = CHART_CROSSHAIR_COLOR;
     ctx.lineWidth = 1;
-    ctx.setLineDash([6, 6]);
     ctx.beginPath();
     ctx.moveTo(activeHorizontalArea.x, lineY);
     ctx.lineTo(activeHorizontalArea.x + activeHorizontalArea.w, lineY);
