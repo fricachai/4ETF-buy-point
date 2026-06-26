@@ -903,6 +903,24 @@ function drawXAxisHoverTag(area, x, valueText) {
   ctx.restore();
 }
 
+function getSmaLegendLayout(priceArea) {
+  ctx.save();
+  ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
+  const gap = ctx.measureText("T").width;
+  let x = priceArea.x + 10;
+  const entries = [
+    { label: "5T", color: SMA5_COLOR, x },
+    { label: "20T", color: SMA20_COLOR, x: 0 },
+    { label: "60T", color: SMA60_COLOR, x: 0 },
+  ];
+  entries.forEach((entry) => {
+    entry.x = x;
+    x += ctx.measureText(entry.label).width + gap;
+  });
+  ctx.restore();
+  return { entries, gap, endX: x - gap };
+}
+
 function getNativeIntervalHours(candles) {
   if (candles.length < 2) return 24;
   let minDiff = Number.POSITIVE_INFINITY;
@@ -1183,8 +1201,9 @@ function renderChart(stock) {
     "center",
   );
 
+  const smaLegendLayout = getSmaLegendLayout(priceArea);
   if (shouldShowBuyReminder(stock.code, buySignalData.latestSignal)) {
-    drawChartReminderText(`[買點提醒] ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, priceArea.x + 210, priceArea.y + 8);
+    drawChartReminderText(`[買點提醒] ${formatBuyReminderDescription(stock.code)} / ${formatLatestReminderSummary(stock.code, buySignalData.latestSignal)}`, smaLegendLayout.endX + smaLegendLayout.gap, priceArea.y + 8);
   }
 
   drawRoundRect(volumeArea.x, volumeArea.y - 6, volumeArea.w, volumeArea.h + 12, 10, "rgba(255,255,255,0.015)", null);
@@ -1372,19 +1391,9 @@ function renderChart(stock) {
     ctx.restore();
   }
 
-  ctx.save();
-  ctx.font = `12px "Segoe UI", "Noto Sans TC", sans-serif`;
-  const smaLabelGap = ctx.measureText("T").width;
-  let smaLabelX = priceArea.x + 10;
-  [
-    ["5T", SMA5_COLOR],
-    ["20T", SMA20_COLOR],
-    ["60T", SMA60_COLOR],
-  ].forEach(([label, color]) => {
-    drawText(label, smaLabelX, priceArea.y + 8, color, 12);
-    smaLabelX += ctx.measureText(label).width + smaLabelGap;
+  smaLegendLayout.entries.forEach(({ label, color, x }) => {
+    drawText(label, x, priceArea.y + 8, color, 12);
   });
-  ctx.restore();
 
   const volumeMax = Math.max(1, ...visibleVolume);
   const mapVolumeY = (value) => volumeArea.y + ((volumeMax - value) / volumeMax) * volumeArea.h;
