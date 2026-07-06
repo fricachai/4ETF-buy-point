@@ -77,6 +77,10 @@ const KNOWN_STOCK_NAMES = {
 
 const ACTIVE_DEFAULT_STOCKS = [
   { code: "2330", name: "台積電" },
+  { code: "1216", name: "統一" },
+  { code: "2382", name: "廣達" },
+  { code: "2886", name: "兆豐金" },
+  { code: "3037", name: "欣興" },
   { code: "00981A", name: "主動統一台股增長" },
   { code: "009804", name: "聯邦台精彩50" },
   { code: "0056", name: "元大高股息" },
@@ -96,6 +100,10 @@ const ACTIVE_KNOWN_STOCK_NAMES = {
   "00646": "元大S&P500",
   "00981A": "主動統一台股增長",
   "009804": "聯邦台精彩50",
+  "1216": "統一",
+  "2382": "廣達",
+  "2886": "兆豐金",
+  "3037": "欣興",
   "TPE: IX0001": "台灣加權指數",
   "2330": "台積電",
   "00830": "國泰費城半導體",
@@ -124,7 +132,7 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
-const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v6";
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v7";
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
