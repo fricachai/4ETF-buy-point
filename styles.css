@@ -587,11 +587,11 @@ input::placeholder {
 
 .watchlist-header {
   display: grid;
-  grid-template-columns: 72px minmax(108px, 1fr) 44px 68px 54px 54px 18px;
+  grid-template-columns: 72px minmax(86px, 1fr) 42px 68px 54px 54px 24px;
   gap: 2px;
   color: var(--muted);
-  font-size: 13px;
-  padding: 8px 6px;
+  font-size: 12px;
+  padding: 7px 6px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   align-items: center;
@@ -642,14 +642,16 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 280px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .watch-item {
   display: grid;
-  grid-template-columns: 72px minmax(108px, 1fr) 44px 68px 54px 54px 18px;
+  grid-template-columns: 72px minmax(86px, 1fr) 42px 68px 54px 54px 24px;
   gap: 2px;
-  min-height: 32px;
+  min-height: 38px;
   padding: 2px 6px;
   font-size: 13px;
   border-bottom: 1px solid var(--line-soft);
@@ -699,7 +701,7 @@ input::placeholder {
   min-height: 18px;
   font-weight: 700;
   color: #ffe27a;
-  line-height: 1.2;
+  line-height: 1.15;
   text-align: center;
 }
 
@@ -708,9 +710,9 @@ input::placeholder {
   align-items: center;
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 22px;
+  min-height: 16px;
   color: #ffffff;
-  line-height: 1;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -730,10 +732,11 @@ input::placeholder {
   align-self: stretch;
   align-items: flex-start;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
-  min-height: 22px;
-  overflow: visible;
+  min-height: 24px;
+  max-height: 34px;
+  overflow: hidden;
 }
 
 .watch-k,
@@ -750,7 +753,7 @@ input::placeholder {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   color: #f3f6fb;
-  line-height: 1.2;
+  line-height: 1.15;
   text-align: center;
 }
 
@@ -798,13 +801,13 @@ input::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 20px;
+  width: 22px;
+  height: 24px;
   align-self: center;
   justify-self: center;
   border-radius: 8px;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
   transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
@@ -829,14 +832,17 @@ input::placeholder {
   flex: 0 0 auto;
   max-width: 100%;
   box-sizing: border-box;
-  padding: 3px 6px;
+  padding: 1px 5px;
   border-radius: 999px;
   background: #5f3a08;
   border: 1px solid #d88919;
   color: #fff3cf;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
+  line-height: 1.15;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22);
 }
 
@@ -867,14 +873,14 @@ input::placeholder {
 
   .watchlist {
     max-height: none;
-    overflow-x: auto;
+    overflow-x: hidden;
   }
 
   .watchlist-header,
   .watch-item {
-    grid-template-columns: 78px var(--watch-name-col, max-content) 44px 70px 58px 58px 18px;
-    width: max-content;
-    min-width: 100%;
+    grid-template-columns: 72px minmax(86px, 1fr) 42px 68px 54px 54px 24px;
+    width: 100%;
+    min-width: 0;
   }
 
   .watchlist-header span:nth-child(2) {
