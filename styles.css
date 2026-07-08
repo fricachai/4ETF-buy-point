@@ -587,10 +587,13 @@ input::placeholder {
 
 .watchlist-header {
   display: grid;
-  grid-template-columns: 72px minmax(86px, 1fr) 42px 68px 54px 54px 24px;
+  grid-template-columns: 60px minmax(124px, 1fr) 36px 60px 48px 50px 20px;
   gap: 2px;
-  color: var(--muted);
+  margin-left: 2px;
+  margin-right: 19px;
+  color: #f3f6fb;
   font-size: 12px;
+  font-weight: 700;
   padding: 7px 6px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -603,6 +606,12 @@ input::placeholder {
   justify-content: center;
   min-height: 22px;
   text-align: center;
+}
+
+.watchlist-header span:first-child {
+  justify-content: flex-start;
+  padding-left: 7px;
+  text-align: left;
 }
 
 .watch-header-stack {
@@ -649,11 +658,11 @@ input::placeholder {
 
 .watch-item {
   display: grid;
-  grid-template-columns: 72px minmax(86px, 1fr) 42px 68px 54px 54px 24px;
+  grid-template-columns: 60px minmax(124px, 1fr) 36px 60px 48px 50px 20px;
   gap: 2px;
-  min-height: 38px;
+  min-height: 40px;
   padding: 2px 6px;
-  font-size: 13px;
+  font-size: 12px;
   border-bottom: 1px solid var(--line-soft);
   cursor: grab;
   user-select: none;
@@ -697,8 +706,9 @@ input::placeholder {
 .watch-code {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 18px;
+  padding-left: 7px;
   font-weight: 700;
   color: #ffe27a;
   line-height: 1.15;
@@ -734,8 +744,8 @@ input::placeholder {
   justify-content: center;
   gap: 1px;
   min-width: 0;
-  min-height: 24px;
-  max-height: 34px;
+  min-height: 28px;
+  max-height: 36px;
   overflow: hidden;
 }
 
@@ -801,7 +811,7 @@ input::placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
+  width: 20px;
   height: 24px;
   align-self: center;
   justify-self: center;
@@ -841,8 +851,7 @@ input::placeholder {
   font-weight: 700;
   line-height: 1.15;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.22);
 }
 
@@ -878,7 +887,7 @@ input::placeholder {
 
   .watchlist-header,
   .watch-item {
-    grid-template-columns: 72px minmax(86px, 1fr) 42px 68px 54px 54px 24px;
+    grid-template-columns: 60px minmax(124px, 1fr) 36px 60px 48px 50px 20px;
     width: 100%;
     min-width: 0;
   }
