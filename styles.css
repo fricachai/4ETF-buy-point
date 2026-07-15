@@ -553,6 +553,7 @@ h3 {
 }
 
 .watchlist-panel {
+  --watch-grid-columns: 60px minmax(124px, 1fr) 36px 60px 48px 50px 20px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.03));
   border-left: 1px solid var(--line);
   padding-left: 12px;
@@ -587,7 +588,7 @@ input::placeholder {
 
 .watchlist-header {
   display: grid;
-  grid-template-columns: 60px minmax(124px, 1fr) 36px 60px 48px 50px 20px;
+  grid-template-columns: var(--watch-grid-columns);
   gap: 2px;
   margin-left: 2px;
   margin-right: 19px;
@@ -658,7 +659,7 @@ input::placeholder {
 
 .watch-item {
   display: grid;
-  grid-template-columns: 60px minmax(124px, 1fr) 36px 60px 48px 50px 20px;
+  grid-template-columns: var(--watch-grid-columns);
   gap: 2px;
   min-height: 40px;
   padding: 2px 6px;
@@ -874,6 +875,10 @@ input::placeholder {
     border-bottom: 1px solid var(--line);
   }
 
+  .watchlist-panel {
+    --watch-grid-columns: 60px minmax(124px, var(--watch-name-col, 160px)) 42px 64px 54px 58px 20px;
+  }
+
   .chart-panel,
   .watchlist-panel {
     height: auto;
@@ -887,7 +892,6 @@ input::placeholder {
 
   .watchlist-header,
   .watch-item {
-    grid-template-columns: 60px minmax(124px, 1fr) 36px 60px 48px 50px 20px;
     width: 100%;
     min-width: 0;
   }
@@ -910,5 +914,16 @@ input::placeholder {
   .header-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .watchlist-panel {
+    --watch-grid-columns: 48px 102px 34px 52px 44px 46px 18px;
+  }
+
+  .watchlist-header {
+    margin-left: 0;
+    margin-right: 0;
   }
 }
