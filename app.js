@@ -131,8 +131,8 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
-const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v8";
-const RETIRED_DEFAULT_STOCK_CODES = new Set(["006204", "3037"]);
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v9";
+const RETIRED_DEFAULT_STOCK_CODES = new Set(["006204", "00635U", "3037"]);
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
