@@ -80,7 +80,6 @@ const ACTIVE_DEFAULT_STOCKS = [
   { code: "1216", name: "統一" },
   { code: "2382", name: "廣達" },
   { code: "2886", name: "兆豐金" },
-  { code: "3037", name: "欣興" },
   { code: "00981A", name: "主動統一台股增長" },
   { code: "009804", name: "聯邦台精彩50" },
   { code: "0056", name: "元大高股息" },
@@ -132,7 +131,8 @@ const AUTH_CONFIG = {
 };
 const AUTH_STORAGE_KEY = "stock-observe-panel-auth";
 const WATCHLIST_STORAGE_KEY = "stock-observe-panel-watchlist";
-const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v7";
+const WATCHLIST_MIGRATION_KEY = "stock-observe-panel-watchlist-v8";
+const RETIRED_DEFAULT_STOCK_CODES = new Set(["006204", "3037"]);
 
 let appStarted = false;
 let realtimeRefreshTimer = null;
@@ -199,12 +199,12 @@ function migratePersistedWatchlist(persistedWatchlist) {
     const defaultCodes = ACTIVE_DEFAULT_STOCKS.map((stock) => canonicalizeCode(stock.code));
     const target = persistedWatchlist
       ? {
-        stocks: persistedWatchlist.stocks.filter((stock) => canonicalizeCode(stock.code) !== "006204"),
+        stocks: persistedWatchlist.stocks.filter((stock) => !RETIRED_DEFAULT_STOCK_CODES.has(canonicalizeCode(stock.code))),
         selectedCode: persistedWatchlist.selectedCode,
       }
       : null;
     let changed = Boolean(
-      persistedWatchlist?.stocks?.some((stock) => canonicalizeCode(stock.code) === "006204"),
+      persistedWatchlist?.stocks?.some((stock) => RETIRED_DEFAULT_STOCK_CODES.has(canonicalizeCode(stock.code))),
     );
     if (target?.stocks?.length) {
       const existingByCode = new Map(target.stocks.map((stock) => [canonicalizeCode(stock.code), stock]));
