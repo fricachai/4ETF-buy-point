@@ -713,7 +713,7 @@ input::placeholder {
   font-weight: 700;
   color: #ffe27a;
   line-height: 1.15;
-  text-align: center;
+  text-align: left;
 }
 
 .watch-item .watch-name {
